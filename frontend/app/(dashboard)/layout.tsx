@@ -18,12 +18,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard/afiliados", label: "Afiliados", icon: Users },
-  { href: "/dashboard/entrenadores", label: "Entrenadores", icon: Dumbbell },
-  { href: "/dashboard/membresias", label: "Membresías", icon: CreditCard },
-  { href: "/dashboard/clases", label: "Clases", icon: Calendar },
-  { href: "/dashboard/planes", label: "Planes", icon: ClipboardList },
-  { href: "/dashboard/reportes", label: "Reportes", icon: BarChart3 },
+  { href: "/afiliados", label: "Afiliados", icon: Users },
+  { href: "/entrenadores", label: "Entrenadores", icon: Dumbbell },
+  { href: "/membresias", label: "Membresías", icon: CreditCard },
+  { href: "/clases", label: "Clases", icon: Calendar },
+  { href: "/planes", label: "Planes", icon: ClipboardList },
+  { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -40,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
   };
 
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen overflow-hidden">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform lg:relative lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r transform transition-transform lg:relative lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

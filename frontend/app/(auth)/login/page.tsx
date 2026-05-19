@@ -37,6 +37,7 @@ export default function LoginPage() {
     try {
       const res = await api.post("/auth/login", data);
       localStorage.setItem("token", res.data.data.token);
+      document.cookie = `token=${res.data.data.token}; path=/; max-age=86400; SameSite=Lax`;
       toast.success("Inicio de sesión exitoso");
       router.push("/dashboard");
     } catch (err: any) {

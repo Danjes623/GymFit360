@@ -8,13 +8,13 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("token")?.value || request.headers.get("authorization")?.replace("Bearer ", "");
 
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
-  const isDashboard = pathname.startsWith("/dashboard") || pathname === "/";
+  const isPrivate = !isPublic && pathname !== "/favicon.ico";
 
   if (isPublic && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (isDashboard && !token) {
+  if (isPrivate && !token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

@@ -46,6 +46,7 @@ export default function RegisterPage() {
         password: data.password,
       });
       localStorage.setItem("token", res.data.data.token);
+      document.cookie = `token=${res.data.data.token}; path=/; max-age=86400; SameSite=Lax`;
       toast.success("Cuenta creada exitosamente");
       router.push("/dashboard");
     } catch (err: any) {
