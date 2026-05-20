@@ -230,6 +230,14 @@ router.post(
         return res.status(409).json({ success: false, error: 'La clase ha alcanzado el cupo máximo' });
       }
 
+      const [membresia] = await pool.query(
+        `SELECT id FROM membresias WHERE afiliado_id = ? AND activa = 1 AND fecha_fin >= CURDATE()`,
+        [afiliado_id]
+      );
+      if (!membresia[0]) {
+        return res.status(403).json({ success: false, error: 'Debes tener una membresía activa para inscribirte' });
+      }
+
       const [result] = await pool.query(
         `INSERT INTO inscripciones_clases (afiliado_id, clase_id, estado)
          VALUES (?, ?, 'activa')`,

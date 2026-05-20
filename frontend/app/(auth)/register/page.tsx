@@ -67,22 +67,22 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre completo</Label>
+              <Label htmlFor="nombre">Nombre completo *</Label>
               <Input id="nombre" placeholder="Tu nombre" {...register("nombre")} />
               {errors.nombre && <p className="text-sm text-destructive">{errors.nombre.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input id="email" type="email" placeholder="correo@ejemplo.com" {...register("email")} />
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Contraseña *</Label>
               <Input id="password" type="password" placeholder="Mínimo 6 caracteres" {...register("password")} />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmarPassword">Confirmar contraseña</Label>
+              <Label htmlFor="confirmarPassword">Confirmar contraseña *</Label>
               <Input id="confirmarPassword" type="password" placeholder="Repite la contraseña" {...register("confirmarPassword")} />
               {errors.confirmarPassword && <p className="text-sm text-destructive">{errors.confirmarPassword.message}</p>}
             </div>
