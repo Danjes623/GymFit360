@@ -9,6 +9,8 @@ const clasesRoutes = require('../modules/clases/clases.routes');
 const planesRoutes = require('../modules/planes/planes.routes');
 const reportesRoutes = require('../modules/reportes/reportes.routes');
 const miPerfilRoutes = require('../modules/mi-perfil/mi-perfil.routes');
+const planesAdminRoutes = require('../modules/planes-admin/planes-admin.routes');
+const suscripcionesAdminRoutes = require('../modules/suscripciones-admin/suscripciones-admin.routes');
 
 const router = Router();
 
@@ -22,5 +24,7 @@ router.use('/clases', clasesRoutes);
 router.use('/planes', planesRoutes);
 router.use('/reportes', reportesRoutes);
 router.use('/mi-perfil', miPerfilRoutes);
+router.use('/planes-admin', planesAdminRoutes);
+router.use('/suscripciones-admin', suscripcionesAdminRoutes);
 
 module.exports = router;

@@ -33,8 +33,9 @@ router.get(
         FROM afiliados a
         LEFT JOIN membresias m ON m.afiliado_id = a.id AND (m.activa = 1 OR ? = 'todos')
         LEFT JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
+        WHERE a.admin_id = ?
       `;
-      const params = [estado === 'todos' ? 0 : 1];
+      const params = [estado === 'todos' ? 0 : 1, req.user.admin_id];
 
       if (estado && estado !== 'todos') {
         switch (estado) {
@@ -70,8 +71,8 @@ router.get(
   async (req, res, next) => {
     try {
       const [afiliados] = await pool.query(
-        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ?',
-        [req.params.id]
+        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ? AND admin_id = ?',
+        [req.params.id, req.user.admin_id]
       );
 
       if (!afiliados[0]) {
@@ -137,15 +138,15 @@ router.post(
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
       const [usuarios] = await pool.query(
-        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
-        [email, 'usuario']
+        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1 AND admin_id = ?',
+        [email, 'usuario', req.user.admin_id]
       );
       const usuario_id = usuarios[0]?.id || null;
 
       const [result] = await pool.query(
-        `INSERT INTO afiliados (nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, usuario_id)
-         VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
-        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id]
+        `INSERT INTO afiliados (admin_id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, usuario_id)
+         VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
+        [req.user.admin_id, nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id]
       );
 
       const [rows] = await pool.query(
@@ -194,8 +195,8 @@ router.put(
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
       const [usuarios] = await pool.query(
-        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
-        [email, 'usuario']
+        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1 AND admin_id = ?',
+        [email, 'usuario', req.user.admin_id]
       );
       const usuario_id = usuarios[0]?.id || null;
 
@@ -203,8 +204,8 @@ router.put(
         `UPDATE afiliados
          SET nombre = ?, email = ?, telefono = ?, documento = ?,
              fecha_nacimiento = ?, direccion = ?, usuario_id = ?
-         WHERE id = ?`,
-        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id, req.params.id]
+         WHERE id = ? AND admin_id = ?`,
+        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id, req.params.id, req.user.admin_id]
       );
 
       if (result.affectedRows === 0) {
@@ -212,8 +213,8 @@ router.put(
       }
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ?',
-        [req.params.id]
+        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ? AND admin_id = ?',
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: rows[0] });
@@ -250,7 +251,7 @@ router.delete(
         });
       }
 
-      const [result] = await pool.query('DELETE FROM afiliados WHERE id = ?', [req.params.id]);
+      const [result] = await pool.query('DELETE FROM afiliados WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
 
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Afiliado no encontrado' });

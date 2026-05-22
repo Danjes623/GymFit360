@@ -16,7 +16,9 @@ router.get('/', async (req, res, next) => {
               (SELECT COUNT(*) FROM inscripciones_clases ic WHERE ic.clase_id = c.id AND ic.estado = 'activa') AS cupo_actual
        FROM clases c
        JOIN entrenadores e ON e.id = c.entrenador_id
-       ORDER BY c.horario`
+       WHERE c.admin_id = ?
+       ORDER BY c.horario`,
+        [req.user.admin_id]
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -35,8 +37,8 @@ router.get(
                 c.horario, c.duracion_minutos, c.cupo_maximo, c.activa
          FROM clases c
          JOIN entrenadores e ON e.id = c.entrenador_id
-         WHERE c.id = ?`,
-        [req.params.id]
+          WHERE c.id = ? AND c.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
 
       if (!clases[0]) {
@@ -47,9 +49,9 @@ router.get(
         `SELECT ic.id AS inscripcion_id, ic.afiliado_id, a.nombre AS afiliado, ic.fecha_inscripcion, ic.estado
          FROM inscripciones_clases ic
          JOIN afiliados a ON a.id = ic.afiliado_id
-         WHERE ic.clase_id = ?
+         WHERE ic.clase_id = ? AND ic.admin_id = ?
          ORDER BY a.nombre`,
-        [req.params.id]
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: { ...clases[0], inscritos } });
@@ -93,9 +95,9 @@ router.post(
       }
 
       const [result] = await pool.query(
-        `INSERT INTO clases (nombre, descripcion, entrenador_id, horario, duracion_minutos, cupo_maximo)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo]
+        `INSERT INTO clases (nombre, descripcion, entrenador_id, horario, duracion_minutos, cupo_maximo, admin_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo, req.user.admin_id]
       );
 
       const [rows] = await pool.query(
@@ -103,8 +105,8 @@ router.post(
                 c.horario, c.duracion_minutos, c.cupo_maximo, c.activa
          FROM clases c
          JOIN entrenadores e ON e.id = c.entrenador_id
-         WHERE c.id = ?`,
-        [result.insertId]
+          WHERE c.id = ? AND c.admin_id = ?`,
+        [result.insertId, req.user.admin_id]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
@@ -147,8 +149,8 @@ router.put(
         `UPDATE clases
          SET nombre = ?, descripcion = ?, entrenador_id = ?, horario = ?,
              duracion_minutos = ?, cupo_maximo = ?, activa = ?
-         WHERE id = ?`,
-        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo, activa ?? 1, req.params.id]
+          WHERE id = ? AND admin_id = ?`,
+        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo, activa ?? 1, req.params.id, req.user.admin_id]
       );
 
       if (result.affectedRows === 0) {
@@ -160,8 +162,8 @@ router.put(
                 c.horario, c.duracion_minutos, c.cupo_maximo, c.activa
          FROM clases c
          JOIN entrenadores e ON e.id = c.entrenador_id
-         WHERE c.id = ?`,
-        [req.params.id]
+         WHERE c.id = ? AND c.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: rows[0] });
@@ -189,8 +191,8 @@ router.delete(
         });
       }
 
-      await pool.query('DELETE FROM inscripciones_clases WHERE clase_id = ?', [req.params.id]);
-      const [result] = await pool.query('DELETE FROM clases WHERE id = ?', [req.params.id]);
+      await pool.query('DELETE FROM inscripciones_clases WHERE clase_id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
+      const [result] = await pool.query('DELETE FROM clases WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
 
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Clase no encontrada' });
@@ -219,8 +221,8 @@ router.post(
       const [clase] = await pool.query(
         `SELECT c.id, c.cupo_maximo,
                 (SELECT COUNT(*) FROM inscripciones_clases ic WHERE ic.clase_id = c.id AND ic.estado = 'activa') AS cupo_actual
-         FROM clases c WHERE c.id = ? AND c.activa = 1`,
-        [claseId]
+         FROM clases c WHERE c.id = ? AND c.activa = 1 AND c.admin_id = ?`,
+        [claseId, req.user.admin_id]
       );
       if (!clase[0]) {
         return res.status(404).json({ success: false, error: 'Clase no encontrada o inactiva' });
@@ -231,17 +233,17 @@ router.post(
       }
 
       const [membresia] = await pool.query(
-        `SELECT id FROM membresias WHERE afiliado_id = ? AND activa = 1 AND fecha_fin >= CURDATE()`,
-        [afiliado_id]
+        `SELECT id FROM membresias WHERE afiliado_id = ? AND activa = 1 AND fecha_fin >= CURDATE() AND admin_id = ?`,
+        [afiliado_id, req.user.admin_id]
       );
       if (!membresia[0]) {
         return res.status(403).json({ success: false, error: 'Debes tener una membresía activa para inscribirte' });
       }
 
       const [result] = await pool.query(
-        `INSERT INTO inscripciones_clases (afiliado_id, clase_id, estado)
-         VALUES (?, ?, 'activa')`,
-        [afiliado_id, claseId]
+        `INSERT INTO inscripciones_clases (afiliado_id, clase_id, estado, admin_id)
+         VALUES (?, ?, 'activa', ?)`,
+        [afiliado_id, claseId, req.user.admin_id]
       );
 
       const [inscripcion] = await pool.query(

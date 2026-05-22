@@ -135,7 +135,7 @@ export default function RegisterPage() {
           <p className="text-center text-xs text-muted-foreground">
             ¿Eres administrador?{" "}
             <Link href="/register-admin" className="font-semibold text-primary hover:underline transition-colors">
-              Regístrate con código de invitación
+              Suscríbete como administrador
             </Link>
           </p>
         </div>

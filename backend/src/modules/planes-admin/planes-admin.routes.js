@@ -6,13 +6,10 @@ const authenticateToken = require('../../middlewares/auth');
 
 const router = Router();
 
-router.use(authenticateToken);
-
-router.get('/', async (req, res, next) => {
+router.get('/', async (_req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM tipos_membresia WHERE admin_id = ? ORDER BY nombre',
-      [req.user.admin_id]
+      'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM planes_admin WHERE activo = 1 ORDER BY precio'
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -21,17 +18,32 @@ router.get('/', async (req, res, next) => {
 });
 
 router.get(
+  '/todas',
+  authenticateToken,
+  async (_req, res, next) => {
+    try {
+      const [rows] = await pool.query(
+        'SELECT id, nombre, duracion_dias, precio, descripcion, activo, creado_en, actualizado_en FROM planes_admin ORDER BY activo DESC, precio'
+      );
+      res.json({ success: true, data: rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
   '/:id',
   [param('id').isInt().withMessage('ID inválido')],
   validate,
   async (req, res, next) => {
     try {
       const [rows] = await pool.query(
-        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM tipos_membresia WHERE id = ? AND admin_id = ?',
-        [req.params.id, req.user.admin_id]
+        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM planes_admin WHERE id = ?',
+        [req.params.id]
       );
       if (!rows[0]) {
-        return res.status(404).json({ success: false, error: 'Tipo de membresía no encontrado' });
+        return res.status(404).json({ success: false, error: 'Plan no encontrado' });
       }
       res.json({ success: true, data: rows[0] });
     } catch (err) {
@@ -42,6 +54,7 @@ router.get(
 
 router.post(
   '/',
+  authenticateToken,
   [
     body('nombre')
       .trim()
@@ -58,23 +71,24 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
+      if (req.user.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo administradores pueden gestionar planes' });
+      }
+
       const { nombre, duracion_dias, precio, descripcion } = req.body;
 
       const [result] = await pool.query(
-        'INSERT INTO tipos_membresia (nombre, duracion_dias, precio, descripcion, admin_id) VALUES (?, ?, ?, ?, ?)',
-        [nombre, duracion_dias, precio, descripcion || null, req.user.admin_id]
+        'INSERT INTO planes_admin (nombre, duracion_dias, precio, descripcion) VALUES (?, ?, ?, ?)',
+        [nombre, duracion_dias, precio, descripcion || null]
       );
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM tipos_membresia WHERE id = ? AND admin_id = ?',
-        [result.insertId, req.user.admin_id]
+        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM planes_admin WHERE id = ?',
+        [result.insertId]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ success: false, error: 'Ya existe un tipo de membresía con ese nombre' });
-      }
       next(err);
     }
   }
@@ -82,6 +96,7 @@ router.post(
 
 router.put(
   '/:id',
+  authenticateToken,
   [
     param('id').isInt().withMessage('ID inválido'),
     body('nombre')
@@ -102,27 +117,28 @@ router.put(
   validate,
   async (req, res, next) => {
     try {
+      if (req.user.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo administradores pueden gestionar planes' });
+      }
+
       const { nombre, duracion_dias, precio, descripcion, activo } = req.body;
 
       const [result] = await pool.query(
-        'UPDATE tipos_membresia SET nombre = ?, duracion_dias = ?, precio = ?, descripcion = ?, activo = ? WHERE id = ? AND admin_id = ?',
-        [nombre, duracion_dias, precio, descripcion || null, activo ?? 1, req.params.id, req.user.admin_id]
+        'UPDATE planes_admin SET nombre = ?, duracion_dias = ?, precio = ?, descripcion = ?, activo = ? WHERE id = ?',
+        [nombre, duracion_dias, precio, descripcion || null, activo ?? 1, req.params.id]
       );
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, error: 'Tipo de membresía no encontrado' });
+        return res.status(404).json({ success: false, error: 'Plan no encontrado' });
       }
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM tipos_membresia WHERE id = ? AND admin_id = ?',
-        [req.params.id, req.user.admin_id]
+        'SELECT id, nombre, duracion_dias, precio, descripcion, activo FROM planes_admin WHERE id = ?',
+        [req.params.id]
       );
 
       res.json({ success: true, data: rows[0] });
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ success: false, error: 'Ya existe un tipo de membresía con ese nombre' });
-      }
       next(err);
     }
   }
@@ -130,29 +146,34 @@ router.put(
 
 router.delete(
   '/:id',
+  authenticateToken,
   [param('id').isInt().withMessage('ID inválido')],
   validate,
   async (req, res, next) => {
     try {
-      const [membresias] = await pool.query(
-        'SELECT COUNT(*) AS total FROM membresias WHERE tipo_membresia_id = ? AND admin_id = ?',
-        [req.params.id, req.user.admin_id]
+      if (req.user.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo administradores pueden gestionar planes' });
+      }
+
+      const [suscripciones] = await pool.query(
+        'SELECT COUNT(*) AS total FROM suscripciones_admin WHERE plan_admin_id = ?',
+        [req.params.id]
       );
 
-      if (membresias[0].total > 0) {
+      if (suscripciones[0].total > 0) {
         return res.status(409).json({
           success: false,
-          error: 'No se puede eliminar el tipo de membresía porque tiene membresías asignadas',
+          error: 'No se puede eliminar el plan porque tiene suscripciones asociadas',
         });
       }
 
-      const [result] = await pool.query('DELETE FROM tipos_membresia WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
+      const [result] = await pool.query('DELETE FROM planes_admin WHERE id = ?', [req.params.id]);
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, error: 'Tipo de membresía no encontrado' });
+        return res.status(404).json({ success: false, error: 'Plan no encontrado' });
       }
 
-      res.json({ success: true, message: 'Tipo de membresía eliminado correctamente' });
+      res.json({ success: true, message: 'Plan eliminado correctamente' });
     } catch (err) {
       next(err);
     }

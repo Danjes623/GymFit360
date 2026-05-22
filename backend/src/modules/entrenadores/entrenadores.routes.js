@@ -11,7 +11,8 @@ router.use(authenticateToken);
 router.get('/', async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores ORDER BY nombre'
+      'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE admin_id = ? ORDER BY nombre',
+      [req.user.admin_id]
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -26,8 +27,8 @@ router.get(
   async (req, res, next) => {
     try {
       const [entrenadores] = await pool.query(
-        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ?',
-        [req.params.id]
+        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ? AND admin_id = ?',
+        [req.params.id, req.user.admin_id]
       );
 
       if (!entrenadores[0]) {
@@ -36,9 +37,9 @@ router.get(
 
       const [clases] = await pool.query(
         `SELECT c.id, c.nombre, c.horario, c.cupo_maximo, c.cupo_actual
-         FROM clases c WHERE c.entrenador_id = ? AND c.activa = 1
+         FROM clases c WHERE c.entrenador_id = ? AND c.activa = 1 AND c.admin_id = ?
          ORDER BY c.horario`,
-        [req.params.id]
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: { ...entrenadores[0], clases } });
@@ -71,13 +72,13 @@ router.post(
       const { nombre, email, telefono, especialidad } = req.body;
 
       const [result] = await pool.query(
-        'INSERT INTO entrenadores (nombre, email, telefono, especialidad) VALUES (?, ?, ?, ?)',
-        [nombre, email, telefono || null, especialidad]
+        'INSERT INTO entrenadores (nombre, email, telefono, especialidad, admin_id) VALUES (?, ?, ?, ?, ?)',
+        [nombre, email, telefono || null, especialidad, req.user.admin_id]
       );
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ?',
-        [result.insertId]
+        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ? AND admin_id = ?',
+        [result.insertId, req.user.admin_id]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
@@ -119,8 +120,8 @@ router.put(
       const [result] = await pool.query(
         `UPDATE entrenadores
          SET nombre = ?, email = ?, telefono = ?, especialidad = ?, activo = ?
-         WHERE id = ?`,
-        [nombre, email, telefono || null, especialidad, activo ?? 1, req.params.id]
+         WHERE id = ? AND admin_id = ?`,
+        [nombre, email, telefono || null, especialidad, activo ?? 1, req.params.id, req.user.admin_id]
       );
 
       if (result.affectedRows === 0) {
@@ -128,8 +129,8 @@ router.put(
       }
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ?',
-        [req.params.id]
+        'SELECT id, nombre, email, telefono, especialidad, activo, fecha_ingreso FROM entrenadores WHERE id = ? AND admin_id = ?',
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: rows[0] });
@@ -150,9 +151,9 @@ router.delete(
     try {
       const [dependencias] = await pool.query(
         `SELECT
-           (SELECT COUNT(*) FROM clases WHERE entrenador_id = ? AND activa = 1) AS clases_activas,
-           (SELECT COUNT(*) FROM planes_entrenamiento WHERE entrenador_id = ? AND activo = 1) AS planes_activos`,
-        [req.params.id, req.params.id]
+           (SELECT COUNT(*) FROM clases WHERE entrenador_id = ? AND activa = 1 AND admin_id = ?) AS clases_activas,
+           (SELECT COUNT(*) FROM planes_entrenamiento WHERE entrenador_id = ? AND activo = 1 AND admin_id = ?) AS planes_activos`,
+        [req.params.id, req.user.admin_id, req.params.id, req.user.admin_id]
       );
 
       const dep = dependencias[0];
@@ -164,7 +165,7 @@ router.delete(
         });
       }
 
-      const [result] = await pool.query('DELETE FROM entrenadores WHERE id = ?', [req.params.id]);
+      const [result] = await pool.query('DELETE FROM entrenadores WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
 
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Entrenador no encontrado' });

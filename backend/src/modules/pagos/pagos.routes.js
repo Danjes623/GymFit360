@@ -14,10 +14,12 @@ router.get('/', async (req, res, next) => {
       `SELECT p.id, p.monto, p.fecha_pago, p.metodo_pago, p.referencia, p.observaciones,
               p.membresia_id, p.afiliado_id, a.nombre AS afiliado, tm.nombre AS membresia
        FROM pagos p
-       JOIN afiliados a ON a.id = p.afiliado_id
-       JOIN membresias m ON m.id = p.membresia_id
-       JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-       ORDER BY p.fecha_pago DESC`
+        JOIN afiliados a ON a.id = p.afiliado_id
+        JOIN membresias m ON m.id = p.membresia_id
+        JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
+        WHERE p.admin_id = ?
+        ORDER BY p.fecha_pago DESC`,
+      [req.user.admin_id]
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -38,8 +40,8 @@ router.get(
          JOIN afiliados a ON a.id = p.afiliado_id
          JOIN membresias m ON m.id = p.membresia_id
          JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-         WHERE p.id = ?`,
-        [req.params.id]
+         WHERE p.id = ? AND p.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
       if (!rows[0]) {
         return res.status(404).json({ success: false, error: 'Pago no encontrado' });
@@ -78,18 +80,20 @@ router.post(
     try {
       const { membresia_id, afiliado_id, monto, metodo_pago, referencia, observaciones } = req.body;
 
+      const { admin_id } = req.user;
+
       const [membresia] = await pool.query(
-        'SELECT id FROM membresias WHERE id = ? AND afiliado_id = ?',
-        [membresia_id, afiliado_id]
+        'SELECT id FROM membresias WHERE id = ? AND afiliado_id = ? AND admin_id = ?',
+        [membresia_id, afiliado_id, admin_id]
       );
       if (!membresia[0]) {
         return res.status(400).json({ success: false, error: 'La membresía no existe o no pertenece al afiliado' });
       }
 
       const [result] = await pool.query(
-        `INSERT INTO pagos (membresia_id, afiliado_id, monto, metodo_pago, referencia, observaciones)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [membresia_id, afiliado_id, monto, metodo_pago, referencia || null, observaciones || null]
+        `INSERT INTO pagos (membresia_id, afiliado_id, monto, metodo_pago, referencia, observaciones, admin_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [membresia_id, afiliado_id, monto, metodo_pago, referencia || null, observaciones || null, admin_id]
       );
 
       const [rows] = await pool.query(
@@ -99,8 +103,8 @@ router.post(
          JOIN afiliados a ON a.id = p.afiliado_id
          JOIN membresias m ON m.id = p.membresia_id
          JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-         WHERE p.id = ?`,
-        [result.insertId]
+         WHERE p.id = ? AND p.admin_id = ?`,
+        [result.insertId, admin_id]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
@@ -116,7 +120,7 @@ router.delete(
   validate,
   async (req, res, next) => {
     try {
-      const [result] = await pool.query('DELETE FROM pagos WHERE id = ?', [req.params.id]);
+      const [result] = await pool.query('DELETE FROM pagos WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Pago no encontrado' });
       }

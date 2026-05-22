@@ -16,9 +16,11 @@ router.get('/', async (req, res, next) => {
               p.afiliado_id, a.nombre AS afiliado,
               p.entrenador_id, e.nombre AS entrenador
        FROM planes_entrenamiento p
-       JOIN afiliados a ON a.id = p.afiliado_id
-       JOIN entrenadores e ON e.id = p.entrenador_id
-       ORDER BY p.creado_en DESC`
+        JOIN afiliados a ON a.id = p.afiliado_id
+        JOIN entrenadores e ON e.id = p.entrenador_id
+        WHERE p.admin_id = ?
+        ORDER BY p.creado_en DESC`,
+      [req.user.admin_id]
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -40,8 +42,8 @@ router.get(
          FROM planes_entrenamiento p
          JOIN afiliados a ON a.id = p.afiliado_id
          JOIN entrenadores e ON e.id = p.entrenador_id
-         WHERE p.id = ?`,
-        [req.params.id]
+         WHERE p.id = ? AND p.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
       if (!rows[0]) {
         return res.status(404).json({ success: false, error: 'Plan no encontrado' });
@@ -82,10 +84,12 @@ router.post(
     try {
       const { afiliado_id, entrenador_id, nombre, descripcion, objetivo, fecha_inicio, fecha_fin } = req.body;
 
+      const { admin_id } = req.user;
+
       const [result] = await pool.query(
-        `INSERT INTO planes_entrenamiento (afiliado_id, entrenador_id, nombre, descripcion, objetivo, fecha_inicio, fecha_fin)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [afiliado_id, entrenador_id, nombre, descripcion, objetivo || null, fecha_inicio, fecha_fin || null]
+        `INSERT INTO planes_entrenamiento (afiliado_id, entrenador_id, nombre, descripcion, objetivo, fecha_inicio, fecha_fin, admin_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [afiliado_id, entrenador_id, nombre, descripcion, objetivo || null, fecha_inicio, fecha_fin || null, admin_id]
       );
 
       const [rows] = await pool.query(
@@ -96,8 +100,8 @@ router.post(
          FROM planes_entrenamiento p
          JOIN afiliados a ON a.id = p.afiliado_id
          JOIN entrenadores e ON e.id = p.entrenador_id
-         WHERE p.id = ?`,
-        [result.insertId]
+         WHERE p.id = ? AND p.admin_id = ?`,
+        [result.insertId, admin_id]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
@@ -136,11 +140,13 @@ router.put(
     try {
       const { nombre, descripcion, objetivo, fecha_inicio, fecha_fin, activo } = req.body;
 
+      const { admin_id } = req.user;
+
       const [result] = await pool.query(
         `UPDATE planes_entrenamiento
          SET nombre = ?, descripcion = ?, objetivo = ?, fecha_inicio = ?, fecha_fin = ?, activo = ?
-         WHERE id = ?`,
-        [nombre, descripcion, objetivo || null, fecha_inicio, fecha_fin || null, activo ?? 1, req.params.id]
+         WHERE id = ? AND admin_id = ?`,
+        [nombre, descripcion, objetivo || null, fecha_inicio, fecha_fin || null, activo ?? 1, req.params.id, admin_id]
       );
 
       if (result.affectedRows === 0) {
@@ -155,8 +161,8 @@ router.put(
          FROM planes_entrenamiento p
          JOIN afiliados a ON a.id = p.afiliado_id
          JOIN entrenadores e ON e.id = p.entrenador_id
-         WHERE p.id = ?`,
-        [req.params.id]
+         WHERE p.id = ? AND p.admin_id = ?`,
+        [req.params.id, admin_id]
       );
 
       res.json({ success: true, data: rows[0] });
@@ -172,7 +178,7 @@ router.delete(
   validate,
   async (req, res, next) => {
     try {
-      const [result] = await pool.query('DELETE FROM planes_entrenamiento WHERE id = ?', [req.params.id]);
+      const [result] = await pool.query('DELETE FROM planes_entrenamiento WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
 
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Plan no encontrado' });

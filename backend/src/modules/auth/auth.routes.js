@@ -32,7 +32,7 @@ router.post(
       const { email, password } = req.body;
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, password_hash, rol, activo FROM usuarios WHERE email = ?',
+        'SELECT id, nombre, email, password_hash, rol, admin_id, activo FROM usuarios WHERE email = ?',
         [email]
       );
 
@@ -48,7 +48,7 @@ router.post(
       }
 
       const token = jwt.sign(
-        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, admin_id: usuario.admin_id },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
@@ -62,6 +62,7 @@ router.post(
             nombre: usuario.nombre,
             email: usuario.email,
             rol: usuario.rol,
+            admin_id: usuario.admin_id,
           },
         },
       });
@@ -91,9 +92,15 @@ router.post(
 
       const hash = await bcrypt.hash(password, 10);
 
+      const [afiliadoRows] = await pool.query(
+        'SELECT admin_id FROM afiliados WHERE email = ? AND activo = 1 LIMIT 1',
+        [email]
+      );
+      const adminId = afiliadoRows[0] ? afiliadoRows[0].admin_id : null;
+
       const [insertResult] = await pool.query(
-        'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
-        [nombre, email, hash, 'usuario']
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, admin_id) VALUES (?, ?, ?, ?, ?)',
+        [nombre, email, hash, 'usuario', adminId]
       );
 
       await pool.query(
@@ -102,14 +109,14 @@ router.post(
       );
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios WHERE email = ?',
+        'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE email = ?',
         [email]
       );
 
       const usuario = rows[0];
 
       const token = jwt.sign(
-        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, admin_id: usuario.admin_id },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
@@ -123,6 +130,7 @@ router.post(
             nombre: usuario.nombre,
             email: usuario.email,
             rol: usuario.rol,
+            admin_id: usuario.admin_id,
           },
         },
       });
@@ -156,12 +164,18 @@ router.post(
     try {
       const { nombre, email, password, codigo } = req.body;
 
-      const [codigos] = await pool.query(
+      const [codigosViejos] = await pool.query(
         'SELECT id, usado FROM codigos_admin WHERE codigo = ?',
         [codigo]
       );
 
-      const codigoValido = codigos[0];
+      const [suscripcionesNuevas] = await pool.query(
+        'SELECT id, codigo_usado AS usado FROM suscripciones_admin WHERE codigo = ? AND pagado = 1',
+        [codigo]
+      );
+
+      const codigoValido = codigosViejos[0] || suscripcionesNuevas[0];
+      const esSuscripcion = !!suscripcionesNuevas[0];
 
       if (!codigoValido) {
         return res.status(400).json({ success: false, error: 'Código de invitación inválido' });
@@ -179,19 +193,31 @@ router.post(
       );
 
       await pool.query(
-        'UPDATE codigos_admin SET usado = 1, usado_por = ?, usado_en = NOW() WHERE id = ?',
-        [result.insertId, codigoValido.id]
+        'UPDATE usuarios SET admin_id = id WHERE id = ?',
+        [result.insertId]
       );
 
+      if (esSuscripcion) {
+        await pool.query(
+          'UPDATE suscripciones_admin SET codigo_usado = 1, usado_por = ?, usado_en = NOW() WHERE id = ?',
+          [result.insertId, codigoValido.id]
+        );
+      } else {
+        await pool.query(
+          'UPDATE codigos_admin SET usado = 1, usado_por = ?, usado_en = NOW() WHERE id = ?',
+          [result.insertId, codigoValido.id]
+        );
+      }
+
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios WHERE id = ?',
+        'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE id = ?',
         [result.insertId]
       );
 
       const usuario = rows[0];
 
       const token = jwt.sign(
-        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+        { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, admin_id: usuario.admin_id },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
@@ -205,6 +231,7 @@ router.post(
             nombre: usuario.nombre,
             email: usuario.email,
             rol: usuario.rol,
+            admin_id: usuario.admin_id,
           },
         },
       });
@@ -241,12 +268,12 @@ router.post(
       const hash = await bcrypt.hash(password, 10);
 
       const [result] = await pool.query(
-        'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
-        [nombre, email, hash, 'recepcionista']
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, admin_id) VALUES (?, ?, ?, ?, ?)',
+        [nombre, email, hash, 'recepcionista', req.user.admin_id]
       );
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios WHERE id = ?',
+        'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE id = ?',
         [result.insertId]
       );
 
@@ -273,7 +300,8 @@ router.get(
       }
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY creado_en DESC'
+        'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE admin_id = ? ORDER BY creado_en DESC',
+        [req.user.admin_id]
       );
 
       res.json({ success: true, data: rows });

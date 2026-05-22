@@ -7,7 +7,7 @@ const router = Router();
 router.use(authenticateToken);
 
 function getAfiliadoQuery() {
-  return 'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion FROM afiliados WHERE (usuario_id = ? OR email = ?) AND activo = 1 ORDER BY usuario_id DESC LIMIT 1';
+  return 'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion FROM afiliados WHERE (usuario_id = ? OR email = ?) AND activo = 1 AND admin_id = ? ORDER BY usuario_id DESC LIMIT 1';
 }
 
 router.get('/', async (req, res, next) => {
@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Solo los usuarios pueden acceder a esta sección' });
     }
 
-    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email]);
+    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email, req.user.admin_id]);
 
     if (!afiliados[0]) {
       return res.status(404).json({ success: false, error: 'No tienes un perfil de afiliado vinculado. Contacta a administración.' });
@@ -28,10 +28,10 @@ router.get('/', async (req, res, next) => {
       `SELECT m.id, m.fecha_inicio, m.fecha_fin, m.activa, tm.nombre AS tipo_membresia, tm.precio
        FROM membresias m
        JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-       WHERE m.afiliado_id = ?
+       WHERE m.afiliado_id = ? AND m.admin_id = ?
        ORDER BY m.fecha_inicio DESC
        LIMIT 1`,
-      [afiliado.id]
+      [afiliado.id, req.user.admin_id]
     );
 
     res.json({
@@ -52,7 +52,7 @@ router.get('/clases', async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Acceso no autorizado' });
     }
 
-    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email]);
+    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email, req.user.admin_id]);
 
     if (!afiliados[0]) {
       return res.status(404).json({ success: false, error: 'Perfil de afiliado no encontrado' });
@@ -64,9 +64,9 @@ router.get('/clases', async (req, res, next) => {
        FROM inscripciones_clases ic
        JOIN clases c ON c.id = ic.clase_id
        JOIN entrenadores e ON e.id = c.entrenador_id
-       WHERE ic.afiliado_id = ?
+       WHERE ic.afiliado_id = ? AND ic.admin_id = ?
        ORDER BY c.horario DESC`,
-      [afiliados[0].id]
+      [afiliados[0].id, req.user.admin_id]
     );
 
     res.json({ success: true, data: rows });
@@ -81,7 +81,7 @@ router.get('/planes', async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Acceso no autorizado' });
     }
 
-    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email]);
+    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email, req.user.admin_id]);
 
     if (!afiliados[0]) {
       return res.status(404).json({ success: false, error: 'Perfil de afiliado no encontrado' });
@@ -92,9 +92,9 @@ router.get('/planes', async (req, res, next) => {
               e.nombre AS entrenador
        FROM planes_entrenamiento pe
        JOIN entrenadores e ON e.id = pe.entrenador_id
-       WHERE pe.afiliado_id = ?
+       WHERE pe.afiliado_id = ? AND pe.admin_id = ?
        ORDER BY pe.fecha_inicio DESC`,
-      [afiliados[0].id]
+      [afiliados[0].id, req.user.admin_id]
     );
 
     res.json({ success: true, data: rows });
@@ -109,7 +109,7 @@ router.get('/pagos', async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Acceso no autorizado' });
     }
 
-    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email]);
+    const [afiliados] = await pool.query(getAfiliadoQuery(), [req.user.id, req.user.email, req.user.admin_id]);
 
     if (!afiliados[0]) {
       return res.status(404).json({ success: false, error: 'Perfil de afiliado no encontrado' });
@@ -120,9 +120,9 @@ router.get('/pagos', async (req, res, next) => {
        FROM pagos p
        JOIN membresias m ON m.id = p.membresia_id
        JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-       WHERE p.afiliado_id = ?
+       WHERE p.afiliado_id = ? AND p.admin_id = ?
        ORDER BY p.fecha_pago DESC`,
-      [afiliados[0].id]
+      [afiliados[0].id, req.user.admin_id]
     );
 
     res.json({ success: true, data: rows });

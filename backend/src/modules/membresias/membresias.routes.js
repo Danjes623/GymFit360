@@ -16,7 +16,9 @@ router.get('/', async (req, res, next) => {
        FROM membresias m
        JOIN afiliados a ON a.id = m.afiliado_id
        JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-       ORDER BY m.fecha_inicio DESC`
+       WHERE m.admin_id = ?
+       ORDER BY m.fecha_inicio DESC`,
+        [req.user.admin_id]
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -36,8 +38,8 @@ router.get(
          FROM membresias m
          JOIN afiliados a ON a.id = m.afiliado_id
          JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-         WHERE m.id = ?`,
-        [req.params.id]
+          WHERE m.id = ? AND m.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
       if (!rows[0]) {
         return res.status(404).json({ success: false, error: 'Membresía no encontrada' });
@@ -83,14 +85,14 @@ router.post(
       }
 
       await pool.query(
-        'UPDATE membresias SET activa = 0 WHERE afiliado_id = ? AND activa = 1',
-        [afiliado_id]
+        'UPDATE membresias SET activa = 0 WHERE afiliado_id = ? AND activa = 1 AND admin_id = ?',
+        [afiliado_id, req.user.admin_id]
       );
 
       const [result] = await pool.query(
-        `INSERT INTO membresias (afiliado_id, tipo_membresia_id, fecha_inicio, fecha_fin, observaciones)
-         VALUES (?, ?, ?, DATE_ADD(?, INTERVAL ? DAY), ?)`,
-        [afiliado_id, tipo_membresia_id, fecha_inicio, fecha_inicio, tipo[0].duracion_dias, observaciones || null]
+        `INSERT INTO membresias (afiliado_id, tipo_membresia_id, fecha_inicio, fecha_fin, observaciones, admin_id)
+         VALUES (?, ?, ?, DATE_ADD(?, INTERVAL ? DAY), ?, ?)`,
+        [afiliado_id, tipo_membresia_id, fecha_inicio, fecha_inicio, tipo[0].duracion_dias, observaciones || null, req.user.admin_id]
       );
 
       const [rows] = await pool.query(
@@ -99,8 +101,8 @@ router.post(
          FROM membresias m
          JOIN afiliados a ON a.id = m.afiliado_id
          JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-         WHERE m.id = ?`,
-        [result.insertId]
+         WHERE m.id = ? AND m.admin_id = ?`,
+        [result.insertId, req.user.admin_id]
       );
 
       res.status(201).json({ success: true, data: rows[0] });
@@ -163,9 +165,9 @@ router.put(
         return res.status(400).json({ success: false, error: 'No hay campos para actualizar' });
       }
 
-      params.push(req.params.id);
+      params.push(req.params.id, req.user.admin_id);
       const [result] = await pool.query(
-        `UPDATE membresias SET ${campos.join(', ')} WHERE id = ?`,
+        `UPDATE membresias SET ${campos.join(', ')} WHERE id = ? AND admin_id = ?`,
         params
       );
 
@@ -179,8 +181,8 @@ router.put(
          FROM membresias m
          JOIN afiliados a ON a.id = m.afiliado_id
          JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
-         WHERE m.id = ?`,
-        [req.params.id]
+         WHERE m.id = ? AND m.admin_id = ?`,
+        [req.params.id, req.user.admin_id]
       );
 
       res.json({ success: true, data: rows[0] });
@@ -208,7 +210,7 @@ router.delete(
         });
       }
 
-      const [result] = await pool.query('DELETE FROM membresias WHERE id = ?', [req.params.id]);
+      const [result] = await pool.query('DELETE FROM membresias WHERE id = ? AND admin_id = ?', [req.params.id, req.user.admin_id]);
 
       if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, error: 'Membresía no encontrada' });
