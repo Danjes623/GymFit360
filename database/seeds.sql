@@ -14,7 +14,15 @@ INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
  'admin'),
 ('Recepcionista Ana García', 'recepcion@gymfit360.com',
  '$2b$10$X9Qk8Wj3mN2pL5vH1cRuOeYtZdIaFgBsCxEwVqJrKlMnPoTuWyA6',
- 'recepcionista');
+ 'recepcionista'),
+('Juan Pablo Ramírez', 'jp.ramirez@email.com',
+ '$2b$10$X9Qk8Wj3mN2pL5vH1cRuOeYtZdIaFgBsCxEwVqJrKlMnPoTuWyA6',
+ 'usuario');
+
+-- ============================================================
+-- CÓDIGOS DE ADMIN (un solo uso)
+-- ============================================================
+INSERT INTO codigos_admin (codigo) VALUES ('GYM360-ADMIN-2026');
 
 -- ============================================================
 -- TIPOS DE MEMBRESÍA
@@ -39,17 +47,17 @@ INSERT INTO entrenadores (nombre, email, telefono, especialidad, activo, fecha_i
 -- ============================================================
 -- AFILIADOS (10 afiliados con distintos estados)
 -- ============================================================
-INSERT INTO afiliados (nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion) VALUES
-('Juan Pablo Ramírez',  'jp.ramirez@email.com',   '3101234567', '1098765432', '1990-05-15', '2023-01-10', 'Calle 45 #23-10, Bogotá'),
-('Sofía Martínez',      'sofia.m@email.com',      '3209876543', '1087654321', '1995-08-22', '2023-02-14', 'Carrera 7 #80-55, Bogotá'),
-('Diego Fernández',     'diego.f@email.com',      '3057654321', '1076543210', '1988-12-03', '2022-11-20', 'Av. 68 #12-30, Bogotá'),
-('Valentina Cruz',      'vale.cruz@email.com',    '3161112233', '1065432109', '1993-03-18', '2023-04-05', 'Calle 100 #15-20, Bogotá'),
-('Sebastián López',     'seba.lopez@email.com',   '3004445566', '1054321098', '1992-07-25', '2023-01-28', 'Carrera 15 #90-10, Bogotá'),
-('Camila Torres',       'cami.torres@email.com',  '3208887766', '1043210987', '1997-11-10', '2024-06-01', 'Calle 72 #50-30, Bogotá'),
-('Mateo Vargas',        'mateo.v@email.com',      '3009998877', '1032109876', '1991-02-28', '2024-07-15', 'Carrera 30 #25-15, Bogotá'),
-('Isabella Rojas',      'isa.rojas@email.com',    '3157776655', '1021098765', '1994-09-07', '2023-09-10', 'Av. El Dorado #70-20, Bogotá'),
-('Samuel Gómez',        'samuel.g@email.com',     '3056665544', '1010987654', '1989-04-14', '2022-08-22', 'Calle 26 #34-56, Bogotá'),
-('Luciana Pérez',       'luci.perez@email.com',   '3205554433', '1009876543', '1996-06-30', '2024-03-18', 'Carrera 50 #45-70, Bogotá');
+INSERT INTO afiliados (nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, usuario_id) VALUES
+('Juan Pablo Ramírez',  'jp.ramirez@email.com',   '3101234567', '1098765432', '1990-05-15', '2023-01-10', 'Calle 45 #23-10, Bogotá', 3),
+('Sofía Martínez',      'sofia.m@email.com',      '3209876543', '1087654321', '1995-08-22', '2023-02-14', 'Carrera 7 #80-55, Bogotá', NULL),
+('Diego Fernández',     'diego.f@email.com',      '3057654321', '1076543210', '1988-12-03', '2022-11-20', 'Av. 68 #12-30, Bogotá', NULL),
+('Valentina Cruz',      'vale.cruz@email.com',    '3161112233', '1065432109', '1993-03-18', '2023-04-05', 'Calle 100 #15-20, Bogotá', NULL),
+('Sebastián López',     'seba.lopez@email.com',   '3004445566', '1054321098', '1992-07-25', '2023-01-28', 'Carrera 15 #90-10, Bogotá', NULL),
+('Camila Torres',       'cami.torres@email.com',  '3208887766', '1043210987', '1997-11-10', '2024-06-01', 'Calle 72 #50-30, Bogotá', NULL),
+('Mateo Vargas',        'mateo.v@email.com',      '3009998877', '1032109876', '1991-02-28', '2024-07-15', 'Carrera 30 #25-15, Bogotá', NULL),
+('Isabella Rojas',      'isa.rojas@email.com',    '3157776655', '1021098765', '1994-09-07', '2023-09-10', 'Av. El Dorado #70-20, Bogotá', NULL),
+('Samuel Gómez',        'samuel.g@email.com',     '3056665544', '1010987654', '1989-04-14', '2022-08-22', 'Calle 26 #34-56, Bogotá', NULL),
+('Luciana Pérez',       'luci.perez@email.com',   '3205554433', '1009876543', '1996-06-30', '2024-03-18', 'Carrera 50 #45-70, Bogotá', NULL);
 
 -- ============================================================
 -- MEMBRESÍAS (activas, vencidas y próximas a vencer)

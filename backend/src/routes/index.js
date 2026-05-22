@@ -8,6 +8,7 @@ const pagosRoutes = require('../modules/pagos/pagos.routes');
 const clasesRoutes = require('../modules/clases/clases.routes');
 const planesRoutes = require('../modules/planes/planes.routes');
 const reportesRoutes = require('../modules/reportes/reportes.routes');
+const miPerfilRoutes = require('../modules/mi-perfil/mi-perfil.routes');
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/pagos', pagosRoutes);
 router.use('/clases', clasesRoutes);
 router.use('/planes', planesRoutes);
 router.use('/reportes', reportesRoutes);
+router.use('/mi-perfil', miPerfilRoutes);
 
 module.exports = router;

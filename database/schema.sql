@@ -6,6 +6,8 @@
 --   2. USE gymfit360_db;
 --   3. Ejecutar este script
 -- ============================================================
+CREATE DATABASE gymfit360_db ;
+USE gymfit360_db;
 
 SET NAMES utf8mb4;
 
@@ -18,6 +20,7 @@ DROP TABLE IF EXISTS clases;
 DROP TABLE IF EXISTS afiliados;
 DROP TABLE IF EXISTS entrenadores;
 DROP TABLE IF EXISTS tipos_membresia;
+DROP TABLE IF EXISTS codigos_admin;
 DROP TABLE IF EXISTS usuarios;
 
 -- ============================================================
@@ -35,8 +38,26 @@ CREATE TABLE usuarios (
     actualizado_en  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT uq_usuarios_email UNIQUE (email),
-    CONSTRAINT chk_usuarios_rol CHECK (rol IN ('admin', 'recepcionista'))
+    CONSTRAINT chk_usuarios_rol CHECK (rol IN ('admin', 'recepcionista', 'usuario'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Usuarios con acceso al sistema GymFit360';
+
+-- ============================================================
+-- TABLA 1b: codigos_admin
+-- Códigos de un solo uso para registrar cuentas de administrador.
+-- El dueño del sistema genera estos códigos y los entrega al
+-- cliente cuando paga la suscripción del gimnasio.
+-- ============================================================
+CREATE TABLE codigos_admin (
+    id              INT             NOT NULL AUTO_INCREMENT,
+    codigo          VARCHAR(50)     NOT NULL,
+    usado           TINYINT(1)      NOT NULL DEFAULT 0,
+    usado_por       INT             NULL,
+    usado_en        DATETIME        NULL,
+    creado_en       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_codigos_admin_codigo UNIQUE (codigo),
+    CONSTRAINT fk_codigos_admin_usado FOREIGN KEY (usado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Códigos de un solo uso para registro de administradores';
 
 -- ============================================================
 -- TABLA 2: tipos_membresia
@@ -88,11 +109,13 @@ CREATE TABLE afiliados (
     fecha_ingreso       DATE            NOT NULL DEFAULT (CURRENT_DATE),
     direccion           VARCHAR(255),
     activo              TINYINT(1)      NOT NULL DEFAULT 1,
+    usuario_id          INT             NULL COMMENT 'FK opcional a usuarios. Se vincula cuando un usuario-rol crea/registra su cuenta.',
     creado_en           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT uq_afiliados_email UNIQUE (email),
-    CONSTRAINT uq_afiliados_documento UNIQUE (documento)
+    CONSTRAINT uq_afiliados_documento UNIQUE (documento),
+    CONSTRAINT fk_afiliados_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Miembros registrados del gimnasio';
 
 -- ============================================================

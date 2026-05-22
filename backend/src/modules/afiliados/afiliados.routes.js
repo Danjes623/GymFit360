@@ -22,7 +22,7 @@ router.get(
       const { estado } = req.query;
 
       let sql = `
-        SELECT a.id, a.nombre, a.email, a.telefono, a.documento, a.activo,
+        SELECT a.id, a.nombre, a.email, a.telefono, a.documento, a.activo, a.usuario_id,
                tm.nombre AS tipo_membresia, m.fecha_fin, m.activa AS membresia_activa,
                CASE
                  WHEN m.id IS NULL THEN 'sin_membresia'
@@ -70,7 +70,7 @@ router.get(
   async (req, res, next) => {
     try {
       const [afiliados] = await pool.query(
-        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo FROM afiliados WHERE id = ?',
+        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ?',
         [req.params.id]
       );
 
@@ -136,14 +136,20 @@ router.post(
     try {
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
+      const [usuarios] = await pool.query(
+        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
+        [email, 'usuario']
+      );
+      const usuario_id = usuarios[0]?.id || null;
+
       const [result] = await pool.query(
-        `INSERT INTO afiliados (nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion)
-         VALUES (?, ?, ?, ?, ?, CURDATE(), ?)`,
-        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null]
+        `INSERT INTO afiliados (nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, usuario_id)
+         VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
+        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id]
       );
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo FROM afiliados WHERE id = ?',
+        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ?',
         [result.insertId]
       );
 
@@ -187,12 +193,18 @@ router.put(
     try {
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
+      const [usuarios] = await pool.query(
+        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
+        [email, 'usuario']
+      );
+      const usuario_id = usuarios[0]?.id || null;
+
       const [result] = await pool.query(
         `UPDATE afiliados
          SET nombre = ?, email = ?, telefono = ?, documento = ?,
-             fecha_nacimiento = ?, direccion = ?
+             fecha_nacimiento = ?, direccion = ?, usuario_id = ?
          WHERE id = ?`,
-        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, req.params.id]
+        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id, req.params.id]
       );
 
       if (result.affectedRows === 0) {
@@ -200,7 +212,7 @@ router.put(
       }
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo FROM afiliados WHERE id = ?',
+        'SELECT id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, activo, usuario_id FROM afiliados WHERE id = ?',
         [req.params.id]
       );
 

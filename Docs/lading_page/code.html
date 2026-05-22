@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TITAN ELITE | FORGE YOUR LEGACY</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#e5e2e1",
+                    "on-primary": "#313030",
+                    "surface-bright": "#383939",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "inverse-on-surface": "#303031",
+                    "surface-container-low": "#1b1c1c",
+                    "secondary": "#ffffff",
+                    "on-surface": "#e3e2e2",
+                    "secondary-fixed-dim": "#abd600",
+                    "inverse-surface": "#e3e2e2",
+                    "on-secondary": "#283500",
+                    "on-secondary-fixed-variant": "#3c4d00",
+                    "tertiary-container": "#050505",
+                    "secondary-fixed": "#c3f400",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "surface-container": "#1f2020",
+                    "surface-variant": "#343535",
+                    "outline": "#8e9192",
+                    "on-background": "#e3e2e2",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "error": "#ffb4ab",
+                    "surface": "#121414",
+                    "primary": "#c9c6c5",
+                    "surface-container-high": "#292a2a",
+                    "on-tertiary": "#313030",
+                    "background": "#121414",
+                    "primary-container": "#050505",
+                    "error-container": "#93000a",
+                    "primary-fixed-dim": "#c9c6c5",
+                    "on-secondary-fixed": "#161e00",
+                    "on-primary-fixed": "#1c1b1b",
+                    "surface-container-lowest": "#0d0e0f",
+                    "on-tertiary-container": "#787777",
+                    "surface-dim": "#121414",
+                    "outline-variant": "#444748",
+                    "on-primary-fixed-variant": "#474646",
+                    "inverse-primary": "#5f5e5e",
+                    "secondary-container": "#c3f400",
+                    "surface-tint": "#c9c6c5",
+                    "surface-container-highest": "#343535",
+                    "on-surface-variant": "#c4c7c7",
+                    "on-primary-container": "#797777",
+                    "tertiary": "#c8c6c5",
+                    "on-secondary-container": "#556d00",
+                    "tertiary-fixed": "#e5e2e1",
+                    "volt": "#CCFF00",
+                    "obsidian": "#050505"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "32px",
+                    "stack-lg": "80px",
+                    "stack-sm": "12px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "unit": "8px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-md": ["Montserrat"],
+                    "headline-lg": ["Montserrat"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Montserrat"],
+                    "stats-num": ["Montserrat"],
+                    "display-lg": ["Montserrat"]
+            },
+            "fontSize": {
+                    "display-md": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "stats-num": ["48px", {"lineHeight": "1.0", "fontWeight": "900"}],
+                    "display-lg": ["80px", {"lineHeight": "1.0", "letterSpacing": "-0.04em", "fontWeight": "900"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #050505; color: #e3e2e2; scroll-behavior: smooth; }
+        .gradient-kinetic { background: linear-gradient(90deg, #CCFF00 0%, #abd600 100%); }
+        .glass-card { background: rgba(26, 26, 26, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .neon-border-hover:hover { border-color: #CCFF00; box-shadow: 0 0 15px rgba(204, 255, 0, 0.2); }
+        .text-glow { text-shadow: 0 0 10px rgba(204, 255, 0, 0.3); }
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-body-md antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-white/10">
+<div class="flex justify-between items-center px-margin-desktop py-unit max-w-container-max mx-auto h-20">
+<div class="font-display-md text-headline-lg italic uppercase tracking-tighter text-secondary">TITAN ELITE</div>
+<nav class="hidden md:flex items-center space-x-gutter">
+<a class="font-label-caps text-label-caps text-secondary border-b-2 border-secondary-container pb-1 transition-transform duration-200 active:scale-95" href="#">About</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors duration-300 transition-transform duration-200 active:scale-95" href="#">Classes</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors duration-300 transition-transform duration-200 active:scale-95" href="#">Trainers</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors duration-300 transition-transform duration-200 active:scale-95" href="#">Pricing</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors duration-300 transition-transform duration-200 active:scale-95" href="#">Contact</a>
+</nav>
+<button class="gradient-kinetic text-obsidian px-6 py-2 font-label-caps text-label-caps font-bold uppercase transition-all hover:brightness-110 hover:shadow-[0_0_20px_rgba(204,255,0,0.4)]">Join Now</button>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-1000" data-alt="A gritty, high-contrast photograph of a professional athlete performing a heavy deadlift in a dark, atmospheric industrial gym. The lighting is dramatic and moody, focusing on the athlete's muscular definition and intensity. Subtle neon green light reflections glint off the chrome barbell and weight plates. The aesthetic is raw, powerful, and premium, perfectly matching a high-performance athletic brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDknsLDDpLshZNzgXpNjMHuaJdatDbRpJTXFc5s-MkvkHOkvpjsuM7q6Ot7YuFaqzcj7uejtDHwgUVWgM65O1zMud3cuy4P-ml8J2z86gtE4o43R7BojjzgAX6v5vCxU_nJ7QnxGkiUJ1kMB-bYGuGC0XjNFqSAiS-B-jxZjtXDDfQMGtAH9HaAZO1XB3GmC-FvSbs4VEixYvWlOzshpKrUUT_Mv11GSBf4nPtGTswxkUsICP4brDlGTK-h5XMzYnKFN5E82Tmqi9rs"/>
+<div class="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-obsidian/80 via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 px-margin-desktop max-w-container-max w-full text-left reveal">
+<p class="font-label-caps text-label-caps text-volt mb-4 tracking-[0.3em] uppercase">Forging Champions Since 2018</p>
+<h1 class="font-display-lg text-display-lg italic uppercase text-secondary leading-none mb-8">FORGE YOUR<br/><span class="text-volt text-glow">LEGACY</span></h1>
+<div class="flex flex-col sm:flex-row gap-gutter">
+<button class="gradient-kinetic text-obsidian px-10 py-5 font-label-caps text-label-caps font-extrabold uppercase hover:shadow-[0_0_30px_rgba(204,255,0,0.5)] transition-all">JOIN THE ELITE</button>
+<button class="border border-volt text-volt px-10 py-5 font-label-caps text-label-caps font-extrabold uppercase hover:bg-volt hover:text-obsidian transition-all">BOOK A TOUR</button>
+</div>
+</div>
+</section>
+<!-- Benefits Bento Grid -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="glass-card p-10 neon-border-hover transition-all group reveal">
+<span class="material-symbols-outlined text-volt text-5xl mb-6 group-hover:scale-110 transition-transform">exercise</span>
+<h3 class="font-headline-lg text-headline-lg uppercase mb-4 italic">Expert Coaching</h3>
+<p class="font-body-md text-on-surface-variant">Master your technique with Olympians and world-class strength coaches dedicated to your evolution.</p>
+</div>
+<div class="glass-card p-10 neon-border-hover transition-all group reveal">
+<span class="material-symbols-outlined text-volt text-5xl mb-6 group-hover:scale-110 transition-transform">fitness_center</span>
+<h3 class="font-headline-lg text-headline-lg uppercase mb-4 italic">Elite Equipment</h3>
+<p class="font-body-md text-on-surface-variant">Custom-engineered machines and competition-grade free weights designed for maximum performance output.</p>
+</div>
+<div class="glass-card p-10 neon-border-hover transition-all group reveal">
+<span class="material-symbols-outlined text-volt text-5xl mb-6 group-hover:scale-110 transition-transform">schedule</span>
+<h3 class="font-headline-lg text-headline-lg uppercase mb-4 italic">24/7 Access</h3>
+<p class="font-body-md text-on-surface-variant">The pursuit of greatness never sleeps. Our high-security facility is available to members around the clock.</p>
+</div>
+</div>
+</section>
+<!-- Trainers Showcase -->
+<section class="py-stack-lg bg-surface-container-lowest">
+<div class="px-margin-desktop max-w-container-max mx-auto mb-stack-md flex justify-between items-end reveal">
+<div>
+<p class="font-label-caps text-label-caps text-volt mb-2">THE COUNCIL</p>
+<h2 class="font-display-md text-display-md uppercase italic">ELITE TRAINERS</h2>
+</div>
+<div class="flex gap-4 mb-4">
+<button class="w-12 h-12 border border-white/10 flex items-center justify-center hover:border-volt hover:text-volt transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-12 h-12 border border-white/10 flex items-center justify-center hover:border-volt hover:text-volt transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto hide-scrollbar px-margin-desktop flex gap-gutter pb-10">
+<div class="min-w-[320px] group reveal">
+<div class="h-[450px] overflow-hidden relative mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" data-alt="A portrait of a male fitness trainer with a intense, focused expression, standing in a dark gym environment. He is wearing high-end black athletic compression gear. The lighting is sharp, creating deep shadows and highlighting his athletic physique. The background is a blurred industrial setting with subtle neon green accent lights. The overall mood is authoritative and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzshO5ejXTTjrxissFjUAgR3jQUF08t7VQD43czRlhFmWs1Elac39iQCvIyVdKq_U9BjPL6oBvIzVutGcnvyzNkldVB0plsuBg4meQMKLBIXWhx_O4X_QplRrX7XcIu7cnz0CLZFeen9Er7Nn0MVF4c3fNTP6r_nqX19s2n9iTaB4rnurAhTqzD5O1oM2q89pZYNBQYshc6BGUH4H2Nyvo-2_fNZK2IVHlFkxxhYQMEDhFXAS5FvIXFkFzeo3_Lh0GmZrHcjYGGS1-"/>
+<div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-obsidian to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<p class="font-label-caps text-[10px] text-volt uppercase">Strength &amp; Conditioning</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Marcus Vane</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Head Coach</p>
+</div>
+<div class="min-w-[320px] group reveal">
+<div class="h-[450px] overflow-hidden relative mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" data-alt="A powerful female fitness athlete and coach posing confidently in a dark, high-end gym. She has a determined expression and is captured in a high-contrast lighting setup that emphasizes her strength and form. Neon green linear accents are integrated into the background architecture. The aesthetic is premium, high-energy, and modern, reflecting an elite training environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPVSjiuU5-jdnm2RGsIrytM_mmt8suVjqkBqg6WokDfemWA8YhQm_LbGPY0FDWVL1RB06YTvk878xjhHpri7qmJqHJQUCdNBKDT5SdAScYJaR_lHbAJgdvR4oMBKP3PL9Qb2L64lr8GOWil7NVwK4C5jUFF4ID_AIMlzqBj6GkZRLduui44tp0HaAuvXbkEAEgpgqlz7Ng5Azot4Ab-7yfu9K7rTkOcKwKmrdhZil2kkleyaxAasaXTRp7VIkwkYJO_BKQfjD8fFv6"/>
+<div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-obsidian to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<p class="font-label-caps text-[10px] text-volt uppercase">Body Recomposition</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Elena Rostova</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Senior Specialist</p>
+</div>
+<div class="min-w-[320px] group reveal">
+<div class="h-[450px] overflow-hidden relative mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" data-alt="A professional male fitness coach with a intense, focused expression, standing in a dark gym environment. He is wearing high-end black athletic compression gear. The lighting is sharp, creating deep shadows and highlighting his athletic physique. The background is a blurred industrial setting with subtle neon green accent lights. The overall mood is authoritative and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAexLwN4ZwpRMSmsPM4dC1sbWdY3imaGYP9ZCTdsoclcBpnyiaL8xEacVWhFt0ImM8a7z7BolIQCpgj75Bu_V0kqnULJk7x6xVLsNhwPH2N05MXIcFgtr-eJVCbQs75G0OuQXQcS1_Uw_XAu19F97jcc557Q1XBjiTdlRm9wpwwlkLtEqvAMW8KYJft79oMZCX5Q0YBbBnk2bMnr8U0tSKBVUIxoe7cBwS3cYQEa-lhqJlt4qr9XdwtHiue4Thw0Ka8FLlCbl6wkz9Q"/>
+<div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-obsidian to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<p class="font-label-caps text-[10px] text-volt uppercase">Performance Nutrition</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">David Thorne</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Elite Nutritionist</p>
+</div>
+<div class="min-w-[320px] group reveal">
+<div class="h-[450px] overflow-hidden relative mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" data-alt="A striking female personal trainer performing a technical movement in a high-octane dark fitness studio. The image features dramatic cinematic lighting with sharp highlights and deep shadows. Vibrant neon green accents illuminate the edges of the gym equipment. The mood is highly energetic, professional, and exclusive, emphasizing peak physical performance and elite coaching." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1O0mMAaZDY-V6FwJpW3Pee_VsjCuuJj_VMq97lvEf9tpTUEpmjL4B5rhN-DxMYTqV5lZfxLPFV57Yem2yX9Yc_hUUNPSsR8aRDonbKcaStzAMNJ9OF43uq4xt8grPFR4KCSmgc0hSOXdSbAjvl9BNwYbC-UwU6bFk0vryuxThU427aD1YT2Vv7OfCR2mNO4EjNSlDT8KWouKWqXwIzx4QrWlXcPQ8DkHCJzo8u0kj54oZp6XKkc5oHsdmdcIlRlbGABd_em5-eb0n"/>
+<div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-obsidian to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+<p class="font-label-caps text-[10px] text-volt uppercase">HIIT &amp; Endurance</p>
+</div>
+</div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Sarah Kaine</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Tactical Coach</p>
+</div>
+</div>
+</section>
+<!-- Pricing Cards -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto reveal">
+<div class="text-center mb-stack-lg">
+<p class="font-label-caps text-label-caps text-volt mb-2">CHOOSE YOUR PATH</p>
+<h2 class="font-display-md text-display-md uppercase italic">TRAINING PLANS</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter items-end">
+<!-- Base -->
+<div class="glass-card p-10 border-t-4 border-white/5 hover:border-white/20 transition-all reveal">
+<h3 class="font-headline-lg text-headline-lg uppercase mb-2 italic">Base</h3>
+<p class="text-on-surface-variant mb-6">Foundational Access</p>
+<div class="font-display-md text-headline-lg italic mb-8">$149<span class="text-body-md not-italic font-normal text-on-surface-variant">/mo</span></div>
+<ul class="space-y-4 mb-10 font-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> 24/7 Facility Access</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> Locker &amp; Shower Access</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> 2 Guest Passes / Mo</li>
+</ul>
+<button class="w-full py-4 border border-white/10 hover:border-white font-label-caps text-label-caps font-bold uppercase transition-all">Select Plan</button>
+</div>
+<!-- Pro -->
+<div class="glass-card p-12 border-t-4 border-volt scale-105 shadow-[0_0_40px_rgba(204,255,0,0.1)] reveal">
+<div class="bg-volt text-obsidian inline-block px-3 py-1 font-label-caps text-[10px] font-extrabold uppercase mb-4">Most Popular</div>
+<h3 class="font-headline-lg text-headline-lg uppercase mb-2 italic">Pro</h3>
+<p class="text-on-surface-variant mb-6">Enhanced Performance</p>
+<div class="font-display-md text-headline-lg italic mb-8 text-volt">$249<span class="text-body-md not-italic font-normal text-on-surface-variant">/mo</span></div>
+<ul class="space-y-4 mb-10 font-body-md">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> All Base Features</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> Unlimited Group Classes</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> 1 Personal Session / Mo</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> Nutrition Assessment</li>
+</ul>
+<button class="w-full py-5 gradient-kinetic text-obsidian font-label-caps text-label-caps font-extrabold uppercase hover:brightness-110 transition-all">Join Pro</button>
+</div>
+<!-- Titan -->
+<div class="glass-card p-10 border-t-4 border-white/5 hover:border-white/20 transition-all reveal">
+<h3 class="font-headline-lg text-headline-lg uppercase mb-2 italic">Titan</h3>
+<p class="text-on-surface-variant mb-6">Elite Mastery</p>
+<div class="font-display-md text-headline-lg italic mb-8">$499<span class="text-body-md not-italic font-normal text-on-surface-variant">/mo</span></div>
+<ul class="space-y-4 mb-10 font-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> All Pro Features</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> 4 Personal Sessions / Mo</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> Recovery Suite Access</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-volt text-sm">check_circle</span> Custom App Integration</li>
+</ul>
+<button class="w-full py-4 border border-white/10 hover:border-white font-label-caps text-label-caps font-bold uppercase transition-all">Select Plan</button>
+</div>
+</div>
+</section>
+<!-- Schedule Section -->
+<section class="py-stack-lg bg-surface-container-low">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-stack-md reveal">
+<div>
+<p class="font-label-caps text-label-caps text-volt mb-2">WEEKLY BATTLE</p>
+<h2 class="font-display-md text-display-md uppercase italic">CLASS SCHEDULE</h2>
+</div>
+<div class="flex gap-2 mt-4 md:mt-0">
+<button class="px-4 py-2 font-label-caps text-label-caps bg-volt text-obsidian">MON</button>
+<button class="px-4 py-2 font-label-caps text-label-caps border border-white/10 hover:border-volt transition-all">TUE</button>
+<button class="px-4 py-2 font-label-caps text-label-caps border border-white/10 hover:border-volt transition-all">WED</button>
+<button class="px-4 py-2 font-label-caps text-label-caps border border-white/10 hover:border-volt transition-all">THU</button>
+<button class="px-4 py-2 font-label-caps text-label-caps border border-white/10 hover:border-volt transition-all">FRI</button>
+</div>
+</div>
+<div class="divide-y divide-white/5 reveal">
+<div class="py-6 flex flex-col md:flex-row items-start md:items-center justify-between group cursor-pointer hover:bg-white/5 px-4 transition-colors">
+<div class="flex items-center gap-gutter">
+<span class="font-display-md text-headline-lg italic text-on-surface-variant group-hover:text-volt transition-colors">06:00</span>
+<div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Tactical Strength</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Coach Marcus • 60 Min</p>
+</div>
+</div>
+<button class="mt-4 md:mt-0 px-8 py-2 border border-volt text-volt font-label-caps text-label-caps hover:bg-volt hover:text-obsidian transition-all uppercase">Book Spot</button>
+</div>
+<div class="py-6 flex flex-col md:flex-row items-start md:items-center justify-between group cursor-pointer hover:bg-white/5 px-4 transition-colors">
+<div class="flex items-center gap-gutter">
+<span class="font-display-md text-headline-lg italic text-on-surface-variant group-hover:text-volt transition-colors">09:30</span>
+<div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">TITAN HIIT</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Coach Sarah • 45 Min</p>
+</div>
+</div>
+<button class="mt-4 md:mt-0 px-8 py-2 border border-volt text-volt font-label-caps text-label-caps hover:bg-volt hover:text-obsidian transition-all uppercase">Book Spot</button>
+</div>
+<div class="py-6 flex flex-col md:flex-row items-start md:items-center justify-between group cursor-pointer hover:bg-white/5 px-4 transition-colors">
+<div class="flex items-center gap-gutter">
+<span class="font-display-md text-headline-lg italic text-on-surface-variant group-hover:text-volt transition-colors">17:00</span>
+<div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Barbell Mastery</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Coach Elena • 90 Min</p>
+</div>
+</div>
+<button class="mt-4 md:mt-0 px-8 py-2 border border-volt text-volt font-label-caps text-label-caps hover:bg-volt hover:text-obsidian transition-all uppercase">Book Spot</button>
+</div>
+<div class="py-6 flex flex-col md:flex-row items-start md:items-center justify-between group cursor-pointer hover:bg-white/5 px-4 transition-colors">
+<div class="flex items-center gap-gutter">
+<span class="font-display-md text-headline-lg italic text-on-surface-variant group-hover:text-volt transition-colors">19:30</span>
+<div>
+<h4 class="font-headline-lg text-headline-lg uppercase italic mb-1">Advanced Mobility</h4>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Coach David • 60 Min</p>
+</div>
+</div>
+<button class="mt-4 md:mt-0 px-8 py-2 border border-volt text-volt font-label-caps text-label-caps hover:bg-volt hover:text-obsidian transition-all uppercase">Book Spot</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter reveal">
+<div class="p-12 glass-card relative">
+<span class="material-symbols-outlined text-volt/20 text-8xl absolute top-6 right-6">format_quote</span>
+<p class="font-body-lg text-body-lg italic mb-8 relative z-10 text-secondary">"TITAN ELITE isn't just a gym; it's a sanctuary for those who take their physical potential seriously. The atmosphere is electric and the equipment is second to none."</p>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-surface-container-high rounded-full overflow-hidden border border-volt">
+<img class="w-full h-full object-cover grayscale" data-alt="Close up portrait of a professional male athlete with a focused look. High contrast lighting with a dark background and subtle neon green glow on one side of his face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0omaqlWmnpatwq5XzCz9C67gsjdC6sXADO9PXmav9yDvVckvMKuDRyso8GnlIQgFbDNqgMbHXpdak672z_VMTNa-aEUNDfzWynoMAIBwHcgCrlfe-yPl7l7ymQJginIA5fd0kFv7DqcBWcVAlwSKQxWMiIyrU7q1lTxzEQLeKSDmRgANYXZNnFty1QfDLy77bWzROILI2BZ2la26VFFF1_S-z9D10WyiBhnoODgI1Q1mY8qMnK-vmijx48vLSm5Zmwf4n1jWBR7Sw"/>
+</div>
+<div>
+<p class="font-headline-lg text-body-lg uppercase italic mb-1">Jason Rivers</p>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase">Competitive Powerlifter</p>
+</div>
+</div>
+</div>
+<div class="p-12 glass-card relative">
+<span class="material-symbols-outlined text-volt/20 text-8xl absolute top-6 right-6">format_quote</span>
+<p class="font-body-lg text-body-lg italic mb-8 relative z-10 text-secondary">"The coaching at Titan transformed my entire approach to training. I've hit PRs I never thought possible in just six months of dedicated work."</p>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-surface-container-high rounded-full overflow-hidden border border-volt">
+<img class="w-full h-full object-cover grayscale" data-alt="Close up portrait of a fit female athlete with sweat on her skin, looking intensely at the camera. Dark studio lighting with sharp neon highlights defining her features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALUY3-W_NxC5rl3W6nPi-JD54gVKy7v2AXuvhnBom04U8ewH0Ui6b5Fa2U50B66P68jsUijNM_aXARHpC3tp7Qzjh-r7o37HULlabumJ6pXCwzcTlflkyyphCOFil1GLeeiy43MWGkJGO7cd0n4QLhCr8mCaN8_weNyExmlEur0Bue942pKmHft3k2lKuZmiS8kOBKP9EKXdLaskEbkMrVoA3KnjEIdZNVd6LxXU1TGIzoH4-HN8gSyw64aYoZWdfqef3Pa7UAUCrW"/>
+</div>
+<div>
+<p class="font-headline-lg text-body-lg uppercase italic mb-1">Mila Thorne</p>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase">Elite Hybrid Athlete</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Contact Section -->
+<section class="py-stack-lg bg-surface relative overflow-hidden">
+<div class="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
+<img class="w-full h-full object-cover grayscale" data-alt="Atmospheric gym background with professional fitness equipment blurred in the background. High contrast black and white style with a subtle neon green overlay gradient." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgj9oNfqRC0vtdfWSVFULeJrqN2I7xE_PQU59VRxNxpBLMH4mSzBaOmHlt3Djm9YdRQeJ4-OgN74dcSlj-zpNHOs3IheHBJDUf-LAM7U3P_kN93tnTvbK562JzUZGwWj_mU188j62jVSGhz9CBLw0akl0Gdh-5Twr0zdc0bXwGO5IPYdLOFG29uxbImSMpbu4UaV0Y5lsuII_O19-JusmgG0pweY30YvgQla9iia6Jlk96yS7d7MdnniKLgPTUYpUqeHg2yxP66YYT"/>
+</div>
+<div class="px-margin-desktop max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-stack-lg relative z-10 reveal">
+<div>
+<p class="font-label-caps text-label-caps text-volt mb-2">GET STARTED</p>
+<h2 class="font-display-md text-display-md uppercase italic mb-8">REACH OUT</h2>
+<p class="font-body-lg text-on-surface-variant mb-12">Ready to take the first step towards your ultimate form? Fill out the form and a performance specialist will contact you within 24 hours.</p>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-volt">location_on</span>
+<span class="font-body-md">1024 Performance Way, Titanium District</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-volt">call</span>
+<span class="font-body-md">+1 (555) TITAN-01</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-volt">mail</span>
+<span class="font-body-md">elite@titan-performance.com</span>
+</div>
+</div>
+</div>
+<div class="glass-card p-10">
+<form class="space-y-8">
+<div class="relative group">
+<input class="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-volt transition-all peer placeholder-transparent" id="name" placeholder="Full Name" type="text"/>
+<label class="absolute left-0 top-0 font-label-caps text-[10px] text-on-surface-variant uppercase transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-label-caps peer-focus:-translate-y-4 peer-focus:text-volt peer-focus:text-[10px]" for="name">Full Name</label>
+</div>
+<div class="relative group">
+<input class="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-volt transition-all peer placeholder-transparent" id="email" placeholder="Email Address" type="email"/>
+<label class="absolute left-0 top-0 font-label-caps text-[10px] text-on-surface-variant uppercase transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-label-caps peer-focus:-translate-y-4 peer-focus:text-volt peer-focus:text-[10px]" for="email">Email Address</label>
+</div>
+<div class="relative group">
+<select class="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-volt transition-all appearance-none text-on-surface-variant" id="interest">
+<option disabled="" selected="" value="">Interested In...</option>
+<option class="bg-obsidian" value="membership">Membership</option>
+<option class="bg-obsidian" value="training">Personal Training</option>
+<option class="bg-obsidian" value="tour">Facility Tour</option>
+</select>
+<span class="material-symbols-outlined absolute right-0 top-4 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+<div class="relative group">
+<textarea class="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-volt transition-all peer placeholder-transparent" id="message" placeholder="Message" rows="3"></textarea>
+<label class="absolute left-0 top-0 font-label-caps text-[10px] text-on-surface-variant uppercase transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-label-caps peer-focus:-translate-y-4 peer-focus:text-volt peer-focus:text-[10px]" for="message">Message</label>
+</div>
+<button class="w-full py-5 gradient-kinetic text-obsidian font-label-caps text-label-caps font-extrabold uppercase hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all" type="submit">Submit Application</button>
+</form>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface border-t border-white/5 py-stack-lg">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop max-w-container-max mx-auto">
+<div class="col-span-1 md:col-span-1">
+<div class="font-display-md text-headline-lg-mobile italic uppercase text-secondary mb-6">TITAN ELITE</div>
+<p class="font-body-md text-on-surface-variant pr-8">The standard in elite athletic preparation. Forge your physical legacy with the world's most advanced performance community.</p>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label-caps text-label-caps text-secondary mb-2">QUICK LINKS</h5>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">About</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Classes</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Trainers</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Pricing</a>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label-caps text-label-caps text-secondary mb-2">LEGAL</h5>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Privacy Policy</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Terms of Service</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">FAQ</a>
+<a class="font-body-md text-on-surface-variant hover:text-secondary-container transition-all" href="#">Cookie Policy</a>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label-caps text-label-caps text-secondary mb-2">NEWSLETTER</h5>
+<p class="font-body-md text-on-surface-variant mb-2">Stay updated on elite training tips and community events.</p>
+<div class="flex">
+<input class="bg-surface-container-high border-0 px-4 py-2 w-full text-on-surface focus:ring-1 focus:ring-volt outline-none" placeholder="Email" type="email"/>
+<button class="bg-volt text-obsidian p-2"><span class="material-symbols-outlined">send</span></button>
+</div>
+</div>
+</div>
+<div class="px-margin-desktop max-w-container-max mx-auto mt-stack-lg pt-stack-sm border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase">© 2024 TITAN ELITE PERFORMANCE. ALL RIGHTS RESERVED.</p>
+<div class="flex gap-gutter">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-volt transition-all">brand_awareness</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-volt transition-all">fitness_center</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-volt transition-all">social_leaderboard</span>
+</div>
+</div>
+</footer>
+<script>
+        // Simple Intersection Observer for Reveal animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Smooth scroll for nav links (micro-interaction)
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId !== '#') {
+                    document.querySelector(targetId).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -65,6 +65,70 @@ router.get('/distribucion-afiliados', async (req, res, next) => {
   }
 });
 
+router.get('/metodos-pago', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT metodo_pago, COUNT(*) AS cantidad, SUM(monto) AS total
+       FROM pagos
+       WHERE fecha_pago >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+       GROUP BY metodo_pago
+       ORDER BY total DESC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/resumen-financiero', async (req, res, next) => {
+  try {
+    const [[{ total_mes }]] = await pool.query(
+      `SELECT COALESCE(SUM(monto), 0) AS total_mes
+       FROM pagos
+       WHERE DATE_FORMAT(fecha_pago, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')`
+    );
+
+    const [[{ total_mes_anterior }]] = await pool.query(
+      `SELECT COALESCE(SUM(monto), 0) AS total_mes_anterior
+       FROM pagos
+       WHERE DATE_FORMAT(fecha_pago, '%Y-%m') = DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), '%Y-%m')`
+    );
+
+    const [[{ total_anual }]] = await pool.query(
+      `SELECT COALESCE(SUM(monto), 0) AS total_anual
+       FROM pagos
+       WHERE YEAR(fecha_pago) = YEAR(NOW())`
+    );
+
+    const [[{ promedio_mensual }]] = await pool.query(
+      `SELECT COALESCE(ROUND(AVG(mensual.total), 0), 0) AS promedio_mensual
+       FROM (
+         SELECT SUM(monto) AS total
+         FROM pagos
+         WHERE fecha_pago >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+         GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m')
+       ) mensual`
+    );
+
+    const variacion = total_mes_anterior > 0
+      ? Math.round(((total_mes - total_mes_anterior) / total_mes_anterior) * 100)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        total_mes: Number(total_mes),
+        total_mes_anterior: Number(total_mes_anterior),
+        variacion,
+        total_anual: Number(total_anual),
+        promedio_mensual: Number(promedio_mensual),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/ultimos-pagos', async (req, res, next) => {
   try {
     const [rows] = await pool.query(
