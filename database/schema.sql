@@ -19,6 +19,7 @@ DROP TABLE IF EXISTS clases;
 DROP TABLE IF EXISTS afiliados;
 DROP TABLE IF EXISTS entrenadores;
 DROP TABLE IF EXISTS tipos_membresia;
+DROP TABLE IF EXISTS gimnasio_config;
 DROP TABLE IF EXISTS codigos_admin;
 DROP TABLE IF EXISTS usuarios;
 
@@ -45,6 +46,25 @@ CREATE TABLE usuarios (
 
 -- FK auto-referenciada (se agrega después de crear la tabla)
 ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_admin FOREIGN KEY (admin_id) REFERENCES usuarios(id) ON DELETE SET NULL;
+
+-- ============================================================
+-- TABLA 1c: gimnasio_config
+-- Configuración del gimnasio (logo, nombre, dirección, teléfono)
+-- Relación 1:1 con admin. Creada automáticamente al registrar admin.
+-- ============================================================
+CREATE TABLE gimnasio_config (
+    id              INT             NOT NULL AUTO_INCREMENT,
+    admin_id        INT             NOT NULL,
+    nombre          VARCHAR(100)    NOT NULL DEFAULT 'GymFit360',
+    logo            VARCHAR(255)    NOT NULL DEFAULT '/logo.png',
+    direccion       VARCHAR(255)    NOT NULL DEFAULT '',
+    telefono        VARCHAR(20)     NOT NULL DEFAULT '',
+    creado_en       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_gimnasio_config_admin UNIQUE (admin_id),
+    CONSTRAINT fk_gimnasio_config_admin FOREIGN KEY (admin_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Configuración del gimnasio por administrador';
 
 -- ============================================================
 -- TABLA 1b: codigos_admin

@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 
 require('dotenv').config();
 
@@ -39,6 +40,8 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api', routes);
+
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use((_req, res) => {
   res.status(404).json({ success: false, error: 'Ruta no encontrada' });

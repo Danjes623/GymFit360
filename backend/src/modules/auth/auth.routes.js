@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const pool = require('../../config/db');
 const validate = require('../../middlewares/validate');
 const authenticateToken = require('../../middlewares/auth');
+const upload = require('../../services/upload');
 
 const router = Router();
 
@@ -322,10 +323,100 @@ router.get('/me', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
     }
 
-    res.json({ success: true, data: rows[0] });
+    const [configRows] = await pool.query(
+      'SELECT nombre, logo, direccion, telefono FROM gimnasio_config WHERE admin_id = ?',
+      [req.user.admin_id]
+    );
+
+    const gimnasio = configRows[0]
+      ? configRows[0]
+      : {
+          nombre: process.env.GYM_NOMBRE || 'GymFit360',
+          logo: process.env.GYM_LOGO || '/logo.png',
+          direccion: process.env.GYM_DIRECCION || '',
+          telefono: process.env.GYM_TELEFONO || '',
+        };
+
+    res.json({ success: true, data: { ...rows[0], gimnasio } });
   } catch (err) {
     next(err);
   }
 });
+
+router.put(
+  '/gimnasio',
+  authenticateToken,
+  [
+    body('nombre')
+      .trim()
+      .isLength({ min: 2, max: 100 }).withMessage('El nombre debe tener entre 2 y 100 caracteres'),
+    body('direccion')
+      .optional({ values: 'falsy' })
+      .trim()
+      .isLength({ max: 255 }).withMessage('La dirección no puede exceder 255 caracteres'),
+    body('telefono')
+      .optional({ values: 'falsy' })
+      .trim()
+      .isLength({ max: 20 }).withMessage('El teléfono no puede exceder 20 caracteres'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      if (req.user.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo los administradores pueden modificar la configuración del gimnasio' });
+      }
+
+      const { nombre, direccion, telefono } = req.body;
+      const adminId = req.user.admin_id;
+
+      await pool.query(
+        `INSERT INTO gimnasio_config (admin_id, nombre, direccion, telefono)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), direccion = VALUES(direccion), telefono = VALUES(telefono), actualizado_en = NOW()`,
+        [adminId, nombre, direccion || '', telefono || '']
+      );
+
+      const [configRows] = await pool.query(
+        'SELECT nombre, logo, direccion, telefono FROM gimnasio_config WHERE admin_id = ?',
+        [adminId]
+      );
+
+      res.json({ success: true, data: configRows[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/gimnasio/logo',
+  authenticateToken,
+  upload.single('logo'),
+  async (req, res, next) => {
+    try {
+      if (req.user.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo los administradores pueden modificar el logo' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'Debes seleccionar una imagen' });
+      }
+
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const adminId = req.user.admin_id;
+
+      await pool.query(
+        `INSERT INTO gimnasio_config (admin_id, logo)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE logo = VALUES(logo), actualizado_en = NOW()`,
+        [adminId, logoUrl]
+      );
+
+      res.json({ success: true, data: { logo: logoUrl } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 module.exports = router;

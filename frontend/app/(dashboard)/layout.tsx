@@ -15,6 +15,8 @@ import {
   X,
   LayoutDashboard,
   UserPlus,
+  User,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,7 @@ const baseNavItems = [
   { href: "/afiliados", label: "Afiliados", icon: Users },
   { href: "/entrenadores", label: "Entrenadores", icon: Dumbbell },
   { href: "/membresias", label: "Membresías", icon: CreditCard },
+  { href: "/pagos", label: "Pagos", icon: Receipt },
   { href: "/clases", label: "Clases", icon: Calendar },
   { href: "/planes", label: "Planes", icon: ClipboardList },
   { href: "/reportes", label: "Reportes", icon: BarChart3 },
@@ -65,8 +68,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   const navItems = rol === "admin"
-    ? [...baseNavItems, { href: "/recepcionistas", label: "Recepcionistas", icon: UserPlus }]
-    : baseNavItems;
+    ? [...baseNavItems, { href: "/recepcionistas", label: "Recepcionistas", icon: UserPlus }, { href: "/mi-cuenta", label: "Mi Cuenta", icon: User }]
+    : [...baseNavItems, { href: "/mi-cuenta", label: "Mi Cuenta", icon: User }];
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050505]">
