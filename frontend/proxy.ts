@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicPaths = ["/login", "/register", "/register-admin"];
+const publicPaths = ["/login", "/register", "/register-admin", "/verificar-cuenta"];
 const publicExact = ["/"];
 
 function decodeRole(token: string): string | null {

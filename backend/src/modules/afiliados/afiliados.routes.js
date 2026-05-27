@@ -137,16 +137,26 @@ router.post(
     try {
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
+      // If admin has no admin_id (pre-migration), use their own id
+      const effectiveAdminId = req.user.admin_id || req.user.id;
+
+      // Find user by email regardless of admin_id
       const [usuarios] = await pool.query(
-        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1 AND admin_id = ?',
-        [email, 'usuario', req.user.admin_id]
+        'SELECT id, admin_id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
+        [email, 'usuario']
       );
-      const usuario_id = usuarios[0]?.id || null;
+      const usuario = usuarios[0] || null;
+      const usuario_id = usuario?.id || null;
+
+      // If user found with mismatched admin_id, fix it
+      if (usuario && usuario.admin_id !== effectiveAdminId) {
+        await pool.query('UPDATE usuarios SET admin_id = ? WHERE id = ?', [effectiveAdminId, usuario.id]);
+      }
 
       const [result] = await pool.query(
         `INSERT INTO afiliados (admin_id, nombre, email, telefono, documento, fecha_nacimiento, fecha_ingreso, direccion, usuario_id)
          VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
-        [req.user.admin_id, nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id]
+        [effectiveAdminId, nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id]
       );
 
       const [rows] = await pool.query(
@@ -194,18 +204,28 @@ router.put(
     try {
       const { nombre, email, telefono, documento, fecha_nacimiento, direccion } = req.body;
 
+      // If admin has no admin_id (pre-migration), use their own id
+      const effectiveAdminId = req.user.admin_id || req.user.id;
+
+      // Find user by email regardless of admin_id
       const [usuarios] = await pool.query(
-        'SELECT id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1 AND admin_id = ?',
-        [email, 'usuario', req.user.admin_id]
+        'SELECT id, admin_id FROM usuarios WHERE email = ? AND rol = ? AND activo = 1',
+        [email, 'usuario']
       );
-      const usuario_id = usuarios[0]?.id || null;
+      const usuario = usuarios[0] || null;
+      const usuario_id = usuario?.id || null;
+
+      // If user found with mismatched admin_id, fix it
+      if (usuario && usuario.admin_id !== effectiveAdminId) {
+        await pool.query('UPDATE usuarios SET admin_id = ? WHERE id = ?', [effectiveAdminId, usuario.id]);
+      }
 
       const [result] = await pool.query(
         `UPDATE afiliados
          SET nombre = ?, email = ?, telefono = ?, documento = ?,
              fecha_nacimiento = ?, direccion = ?, usuario_id = ?
          WHERE id = ? AND admin_id = ?`,
-        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id, req.params.id, req.user.admin_id]
+        [nombre, email, telefono || null, documento, fecha_nacimiento || null, direccion || null, usuario_id, req.params.id, effectiveAdminId]
       );
 
       if (result.affectedRows === 0) {

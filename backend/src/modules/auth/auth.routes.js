@@ -2,11 +2,13 @@ const { Router } = require('express');
 const { body } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const pool = require('../../config/db');
 const validate = require('../../middlewares/validate');
 const authenticateToken = require('../../middlewares/auth');
 const upload = require('../../services/upload');
+const { sendVerificationCode } = require('../../services/email');
 
 const router = Router();
 
@@ -17,6 +19,31 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, error: 'Demasiados intentos de registro. Intenta de nuevo en 15 minutos.' },
 });
+
+const codigoLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiados intentos. Intenta de nuevo en 5 minutos.' },
+});
+
+function generarCodigo() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+async function limpiarExpirados() {
+  try {
+    const [result] = await pool.query(
+      "DELETE FROM usuarios WHERE verificado = 0 AND codigo_expiracion IS NOT NULL AND codigo_expiracion < NOW()"
+    );
+    if (result.affectedRows > 0) {
+      console.log(`[CLEANUP] ${result.affectedRows} registro(s) expirado(s) eliminado(s)`);
+    }
+  } catch (err) {
+    console.error('[CLEANUP] Error:', err.message);
+  }
+}
 
 router.post(
   '/login',
@@ -33,7 +60,7 @@ router.post(
       const { email, password } = req.body;
 
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, password_hash, rol, admin_id, activo FROM usuarios WHERE email = ?',
+        'SELECT id, nombre, email, password_hash, rol, admin_id, activo, verificado FROM usuarios WHERE email = ?',
         [email]
       );
 
@@ -46,6 +73,21 @@ router.post(
       const passwordValida = await bcrypt.compare(password, usuario.password_hash);
       if (!passwordValida) {
         return res.status(401).json({ success: false, error: 'Credenciales inválidas' });
+      }
+
+      if (!usuario.verificado) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cuenta no verificada. Revisa tu email o solicita un nuevo código.',
+          codigo: 'CUENTA_NO_VERIFICADA',
+          email: usuario.email,
+        });
+      }
+
+      // Auto-fix admin_id for admins that registered before the migration
+      if (!usuario.admin_id && usuario.rol === 'admin') {
+        await pool.query('UPDATE usuarios SET admin_id = id WHERE id = ?', [usuario.id]);
+        usuario.admin_id = usuario.id;
       }
 
       const token = jwt.sign(
@@ -85,13 +127,30 @@ router.post(
       .normalizeEmail(),
     body('password')
       .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+    body('telefono')
+      .optional({ values: 'falsy' })
+      .trim()
+      .isLength({ max: 20 }).withMessage('El teléfono no puede exceder 20 caracteres'),
   ],
   validate,
   async (req, res, next) => {
     try {
-      const { nombre, email, password } = req.body;
+      const { nombre, email, password, telefono } = req.body;
+
+      await limpiarExpirados();
+
+      const [existing] = await pool.query('SELECT id, verificado FROM usuarios WHERE email = ?', [email]);
+
+      if (existing[0]) {
+        if (existing[0].verificado) {
+          return res.status(409).json({ success: false, error: 'El email ya está registrado' });
+        }
+        await pool.query('DELETE FROM usuarios WHERE id = ?', [existing[0].id]);
+      }
 
       const hash = await bcrypt.hash(password, 10);
+      const codigo = generarCodigo();
+      const expiracion = new Date(Date.now() + 15 * 60 * 1000);
 
       const [afiliadoRows] = await pool.query(
         'SELECT admin_id FROM afiliados WHERE email = ? AND activo = 1 LIMIT 1',
@@ -100,8 +159,8 @@ router.post(
       const adminId = afiliadoRows[0] ? afiliadoRows[0].admin_id : null;
 
       const [insertResult] = await pool.query(
-        'INSERT INTO usuarios (nombre, email, password_hash, rol, admin_id) VALUES (?, ?, ?, ?, ?)',
-        [nombre, email, hash, 'usuario', adminId]
+        'INSERT INTO usuarios (nombre, email, password_hash, telefono, rol, admin_id, verificado, codigo_verificacion, codigo_expiracion) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)',
+        [nombre, email, hash, telefono || null, 'usuario', adminId, codigo, expiracion]
       );
 
       await pool.query(
@@ -109,12 +168,69 @@ router.post(
         [insertResult.insertId, email]
       );
 
+      await sendVerificationCode({ email, codigo, nombre });
+
+      res.status(201).json({
+        success: true,
+        message: 'Código de verificación enviado a tu email',
+        email,
+      });
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ success: false, error: 'El email ya está registrado' });
+      }
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/verificar-codigo',
+  codigoLimiter,
+  [
+    body('email')
+      .isEmail().withMessage('Debe ser un email válido')
+      .normalizeEmail(),
+    body('codigo')
+      .trim()
+      .isLength({ min: 6, max: 6 }).withMessage('El código debe tener 6 dígitos'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { email, codigo } = req.body;
+
       const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE email = ?',
+        'SELECT id, nombre, email, rol, admin_id, codigo_verificacion, codigo_expiracion, activo FROM usuarios WHERE email = ?',
         [email]
       );
 
       const usuario = rows[0];
+
+      if (!usuario || !usuario.activo) {
+        return res.status(400).json({ success: false, error: 'Cuenta no encontrada' });
+      }
+
+      if (usuario.verificado) {
+        return res.status(400).json({ success: false, error: 'La cuenta ya está verificada' });
+      }
+
+      if (!usuario.codigo_verificacion || !usuario.codigo_expiracion) {
+        return res.status(400).json({ success: false, error: 'No hay código pendiente. Solicita uno nuevo.' });
+      }
+
+      if (usuario.codigo_verificacion !== codigo) {
+        return res.status(400).json({ success: false, error: 'Código incorrecto' });
+      }
+
+      if (new Date(usuario.codigo_expiracion) < new Date()) {
+        return res.status(400).json({ success: false, error: 'El código ha expirado. Solicita uno nuevo.' });
+      }
+
+      await pool.query(
+        'UPDATE usuarios SET verificado = 1, codigo_verificacion = NULL, codigo_expiracion = NULL, actualizado_en = NOW() WHERE id = ?',
+        [usuario.id]
+      );
 
       const token = jwt.sign(
         { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, admin_id: usuario.admin_id },
@@ -122,7 +238,7 @@ router.post(
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
 
-      res.status(201).json({
+      res.json({
         success: true,
         data: {
           token,
@@ -136,9 +252,51 @@ router.post(
         },
       });
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ success: false, error: 'El email ya está registrado' });
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/reenviar-codigo',
+  codigoLimiter,
+  [
+    body('email')
+      .isEmail().withMessage('Debe ser un email válido')
+      .normalizeEmail(),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const [rows] = await pool.query(
+        'SELECT id, nombre, email, verificado, activo FROM usuarios WHERE email = ?',
+        [email]
+      );
+
+      const usuario = rows[0];
+
+      if (!usuario || !usuario.activo) {
+        return res.status(400).json({ success: false, error: 'Cuenta no encontrada' });
       }
+
+      if (usuario.verificado) {
+        return res.status(400).json({ success: false, error: 'La cuenta ya está verificada' });
+      }
+
+      const codigo = generarCodigo();
+      const expiracion = new Date(Date.now() + 15 * 60 * 1000);
+
+      await pool.query(
+        'UPDATE usuarios SET codigo_verificacion = ?, codigo_expiracion = ?, actualizado_en = NOW() WHERE id = ?',
+        [codigo, expiracion, usuario.id]
+      );
+
+      await sendVerificationCode({ email, codigo, nombre: usuario.nombre });
+
+      res.json({ success: true, message: 'Nuevo código enviado a tu email' });
+    } catch (err) {
       next(err);
     }
   }
@@ -189,7 +347,7 @@ router.post(
       const hash = await bcrypt.hash(password, 10);
 
       const [result] = await pool.query(
-        'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, verificado) VALUES (?, ?, ?, ?, 1)',
         [nombre, email, hash, 'admin']
       );
 
@@ -267,10 +425,11 @@ router.post(
 
       const { nombre, email, password } = req.body;
       const hash = await bcrypt.hash(password, 10);
+      const adminId = req.user.admin_id || req.user.id;
 
       const [result] = await pool.query(
-        'INSERT INTO usuarios (nombre, email, password_hash, rol, admin_id) VALUES (?, ?, ?, ?, ?)',
-        [nombre, email, hash, 'recepcionista', req.user.admin_id]
+        'INSERT INTO usuarios (nombre, email, password_hash, rol, admin_id, verificado) VALUES (?, ?, ?, ?, ?, 1)',
+        [nombre, email, hash, 'recepcionista', adminId]
       );
 
       const [rows] = await pool.query(
@@ -300,9 +459,10 @@ router.get(
         return res.status(403).json({ success: false, error: 'Solo los administradores pueden listar usuarios' });
       }
 
+      const adminId = req.user.admin_id || req.user.id;
       const [rows] = await pool.query(
         'SELECT id, nombre, email, rol, admin_id, activo, creado_en FROM usuarios WHERE admin_id = ? ORDER BY creado_en DESC',
-        [req.user.admin_id]
+        [adminId]
       );
 
       res.json({ success: true, data: rows });
@@ -323,9 +483,11 @@ router.get('/me', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
     }
 
+    const effectiveAdminId = req.user.admin_id || req.user.id;
+
     const [configRows] = await pool.query(
       'SELECT nombre, logo, direccion, telefono FROM gimnasio_config WHERE admin_id = ?',
-      [req.user.admin_id]
+      [effectiveAdminId]
     );
 
     const gimnasio = configRows[0]
@@ -367,7 +529,7 @@ router.put(
       }
 
       const { nombre, direccion, telefono } = req.body;
-      const adminId = req.user.admin_id;
+      const adminId = req.user.admin_id || req.user.id;
 
       await pool.query(
         `INSERT INTO gimnasio_config (admin_id, nombre, direccion, telefono)
@@ -403,7 +565,7 @@ router.post(
       }
 
       const logoUrl = `/uploads/${req.file.filename}`;
-      const adminId = req.user.admin_id;
+      const adminId = req.user.admin_id || req.user.id;
 
       await pool.query(
         `INSERT INTO gimnasio_config (admin_id, logo)

@@ -15,6 +15,7 @@ import api from "@/lib/api";
 const registerSchema = z.object({
   nombre: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   email: z.string().email("Debe ser un email válido"),
+  telefono: z.string().max(20, "Máximo 20 caracteres").optional().or(z.literal("")),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmarPassword: z.string().min(6, "Debe confirmar la contraseña"),
 }).refine((data) => data.password === data.confirmarPassword, {
@@ -39,15 +40,14 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         nombre: data.nombre,
         email: data.email,
+        telefono: data.telefono || undefined,
         password: data.password,
       });
-      localStorage.setItem("token", res.data.data.token);
-      document.cookie = `token=${res.data.data.token}; path=/; max-age=86400; SameSite=Lax`;
-      toast.success("Cuenta creada exitosamente");
-      router.push("/mi-perfil");
+      toast.success("Código de verificación enviado a tu email");
+      router.push("/verificar-cuenta?email=" + encodeURIComponent(data.email));
     } catch (err: any) {
       const message = err.response?.data?.error || "Error al crear la cuenta";
       toast.error(message);
@@ -92,6 +92,17 @@ export default function RegisterPage() {
                 {...register("email")}
               />
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telefono" className="text-sm font-medium">Teléfono <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+              <Input
+                id="telefono"
+                type="tel"
+                placeholder="+57 300 000 0000"
+                className="bg-white/5 border-white/10 focus:border-primary/50 h-11"
+                {...register("telefono")}
+              />
+              {errors.telefono && <p className="text-sm text-destructive">{errors.telefono.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">

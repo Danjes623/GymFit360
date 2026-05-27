@@ -38,8 +38,11 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const [noVerificado, setNoVerificado] = useState<string | null>(null);
+
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
+    setNoVerificado(null);
     try {
       const res = await api.post("/auth/login", data);
       const { token, usuario } = res.data.data;
@@ -48,7 +51,11 @@ export default function LoginPage() {
       toast.success(`Bienvenido, ${usuario.nombre}`);
       router.push(usuario.rol === "usuario" ? "/mi-perfil" : "/dashboard");
     } catch (err: any) {
-      const message = err.response?.data?.error || "Error al iniciar sesión";
+      const errData = err.response?.data;
+      const message = errData?.error || "Error al iniciar sesión";
+      if (errData?.codigo === "CUENTA_NO_VERIFICADA") {
+        setNoVerificado(errData.email);
+      }
       toast.error(message);
     } finally {
       setLoading(false);
@@ -100,6 +107,16 @@ export default function LoginPage() {
             >
               {loading ? "Ingresando..." : "Iniciar sesión"}
             </Button>
+            {noVerificado && (
+              <div className="text-center">
+                <Link
+                  href={"/verificar-cuenta?email=" + encodeURIComponent(noVerificado)}
+                  className="text-xs font-medium text-primary hover:underline transition-colors"
+                >
+                  Reenviar código de verificación
+                </Link>
+              </div>
+            )}
           </form>
 
           <p className="text-center text-sm text-muted-foreground">

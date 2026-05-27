@@ -8,6 +8,7 @@ const path = require('path');
 require('dotenv').config();
 
 const routes = require('./routes/index');
+const pool = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -56,6 +57,16 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`GymFit360 API corriendo en puerto ${PORT}`);
+  try {
+    const [result] = await pool.query(
+      "DELETE FROM usuarios WHERE verificado = 0 AND codigo_expiracion IS NOT NULL AND codigo_expiracion < NOW()"
+    );
+    if (result.affectedRows > 0) {
+      console.log(`[CLEANUP] ${result.affectedRows} registro(s) expirado(s) eliminado(s) al iniciar`);
+    }
+  } catch (err) {
+    console.error('[CLEANUP] Error al iniciar:', err.message);
+  }
 });

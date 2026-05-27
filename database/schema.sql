@@ -11,6 +11,9 @@
 SET NAMES utf8mb4;
 
 -- Limpiar tablas si existen (orden inverso por FK)
+DROP TABLE IF EXISTS suscripciones_admin;
+DROP TABLE IF EXISTS planes_admin;
+DROP TABLE IF EXISTS rutinas_ejercicio;
 DROP TABLE IF EXISTS inscripciones_clases;
 DROP TABLE IF EXISTS planes_entrenamiento;
 DROP TABLE IF EXISTS pagos;
@@ -34,9 +37,13 @@ CREATE TABLE usuarios (
     nombre          VARCHAR(100)    NOT NULL,
     email           VARCHAR(150)    NOT NULL,
     password_hash   VARCHAR(255)    NOT NULL COMMENT 'Hash bcrypt, nunca texto plano',
+    telefono        VARCHAR(20)     NULL COMMENT 'Teléfono del usuario',
     rol             VARCHAR(20)     NOT NULL DEFAULT 'admin',
     admin_id        INT             NULL COMMENT 'ID del admin/tenant propietario. Self-FK.',
     activo          TINYINT(1)      NOT NULL DEFAULT 1,
+    verificado      TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '0 = pendiente, 1 = verificado por email',
+    codigo_verificacion VARCHAR(6)  NULL COMMENT 'Código de 6 dígitos para verificar cuenta',
+    codigo_expiracion   DATETIME    NULL COMMENT 'Expiración del código de verificación',
     creado_en       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -262,6 +269,33 @@ CREATE TABLE planes_entrenamiento (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Planes de entrenamiento personalizados';
 
 -- ============================================================
+-- TABLA 9b: rutinas_ejercicio
+-- Ejercicios individuales dentro de un plan de entrenamiento.
+-- Cada ejercicio se asigna a un día de la semana (1=Lun…7=Dom).
+-- ============================================================
+CREATE TABLE rutinas_ejercicio (
+    id              INT             NOT NULL AUTO_INCREMENT,
+    plan_id         INT             NOT NULL,
+    admin_id        INT             NOT NULL,
+    nombre          VARCHAR(150)    NOT NULL,
+    series          INT             NOT NULL DEFAULT 3,
+    repeticiones    INT             NOT NULL DEFAULT 10,
+    peso            DECIMAL(6,2)    NULL COMMENT 'Peso en kg',
+    dia_semana      TINYINT         NOT NULL COMMENT '1=Lun 2=Mar 3=Mie 4=Jue 5=Vie 6=Sab 7=Dom',
+    hora            TIME            NULL,
+    orden           INT             NOT NULL DEFAULT 0,
+    notas           TEXT,
+    creado_en       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_rutinas_plan FOREIGN KEY (plan_id) REFERENCES planes_entrenamiento(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rutinas_admin FOREIGN KEY (admin_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT chk_rutinas_dia CHECK (dia_semana BETWEEN 1 AND 7),
+    CONSTRAINT chk_rutinas_series CHECK (series > 0),
+    CONSTRAINT chk_rutinas_repeticiones CHECK (repeticiones > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Ejercicios individuales dentro de planes de entrenamiento';
+
+-- ============================================================
 -- TABLA 10: planes_admin
 -- Planes de suscripción para administradores (registro vía pago).
 -- Gestionados por el super-admin del sistema.
@@ -354,3 +388,4 @@ CREATE INDEX idx_clases_entrenador ON clases(entrenador_id);
 CREATE INDEX idx_clases_horario ON clases(horario);
 CREATE INDEX idx_planes_afiliado ON planes_entrenamiento(afiliado_id);
 CREATE INDEX idx_planes_entrenador ON planes_entrenamiento(entrenador_id);
+CREATE INDEX idx_rutinas_plan ON rutinas_ejercicio(plan_id);
