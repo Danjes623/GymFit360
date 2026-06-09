@@ -37,16 +37,32 @@ export default function LandingPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add("active");
-        });
-      },
-      { threshold: 0.1 }
-    );
-    document.querySelectorAll(".reveal").forEach((el) => observerRef.current?.observe(el));
-    return () => observerRef.current?.disconnect();
+    const initObserver = () => {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("active");
+          });
+        },
+        { threshold: 0.1 }
+      );
+      document.querySelectorAll(".reveal:not(.active)").forEach((el) => observerRef.current?.observe(el));
+    };
+
+    initObserver();
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        observerRef.current?.disconnect();
+        initObserver();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      observerRef.current?.disconnect();
+    };
   }, []);
 
   return (

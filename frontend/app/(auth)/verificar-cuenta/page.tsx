@@ -2,11 +2,10 @@
 
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 export default function VerificarCuentaPage() {
   return (
@@ -102,6 +101,10 @@ function VerificarCuenta() {
 
       <div className="relative w-full max-w-md mx-4">
         <div className="glass rounded-2xl p-8 space-y-6">
+          <button onClick={() => router.push("/register")} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al registro
+          </button>
           <div className="text-center space-y-2">
             <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
               <Mail className="h-7 w-7 text-primary" />
@@ -165,15 +168,6 @@ function VerificarCuenta() {
             </div>
           </div>
 
-          <div className="text-center">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Volver al registro
-            </Link>
-          </div>
         </div>
       </div>
     </div>

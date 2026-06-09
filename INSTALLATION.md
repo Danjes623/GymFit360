@@ -1,51 +1,20 @@
 # GymFit360 — Guía de instalación
 
-Sistema de gestión de gimnasio con **Next.js 16** (frontend) y **Express 5** (backend) sobre **MySQL 8**.
+Sistema de gestión de gimnasios con **Next.js 16** (frontend), **Express 5** (backend) y **MySQL 8** (base de datos).
 
 ---
 
-## Requisitos del sistema
+## Requisitos
 
-| Herramienta | Versión mínima | Obligatorio |
-|---|---|---|
-| [Node.js](https://nodejs.org/) | 20.x | ✅ Sí |
-| [MySQL](https://dev.mysql.com/downloads/installer/) | 8.0.13+ | ✅ Sí |
-| [Git](https://git-scm.com/) | Cualquier versión reciente | ✅ Sí |
-| npm (incluido con Node.js) | 10.x | ✅ Sí |
-| [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) (recomendado) | 8.x | ❌ Opcional |
-
-> **Nota:** Las funciones `DEFAULT (CURRENT_DATE)` para columnas `DATE` requieren MySQL 8.0.13+.
+| Herramienta | Versión |
+|-------------|---------|
+| Node.js | 20.x |
+| MySQL | 8.0.13+ |
+| npm | 10.x |
 
 ---
 
-## Estructura del proyecto
-
-```
-gymfit360/
-├── backend/           # API REST con Express 5
-│   ├── src/
-│   │   ├── app.js           # Punto de entrada
-│   │   ├── config/db.js     # Conexión a MySQL
-│   │   ├── middlewares/      # auth.js, validate.js
-│   │   ├── modules/          # Cada módulo (auth, afiliados, etc.)
-│   │   └── routes/index.js  # Montaje de rutas
-│   ├── .env                 # Variables de entorno
-│   └── package.json
-├── frontend/          # App Next.js 16
-│   ├── app/                # Rutas y páginas
-│   ├── components/ui/      # shadcn/ui con @base-ui/react
-│   ├── lib/                # api.ts (Axios), utils.ts
-│   ├── proxy.ts            # Middleware de protección de rutas
-│   ├── .env.local          # Variables de entorno
-│   └── package.json
-└── database/
-    ├── schema.sql          # Creación de tablas
-    └── seeds.sql           # Datos de prueba
-```
-
----
-
-## Paso 1 — Clonar el repositorio
+## 1. Clonar y preparar
 
 ```bash
 git clone <url-del-repositorio> gymfit360
@@ -54,11 +23,9 @@ cd gymfit360
 
 ---
 
-## Paso 2 — Configurar la base de datos
+## 2. Base de datos
 
-### 2.1. Crear la base de datos
-
-Abre **MySQL Workbench** (o terminal) y ejecuta:
+Crea la base de datos y ejecuta el esquema:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS gymfit360_db
@@ -66,143 +33,119 @@ CREATE DATABASE IF NOT EXISTS gymfit360_db
   COLLATE utf8mb4_0900_ai_ci;
 ```
 
-### 2.2. Ejecutar el esquema
+Abre `database/schema.sql` en MySQL Workbench y ejecútalo (o hazlo desde terminal).
 
-Abre el archivo `database/schema.sql` en MySQL Workbench y ejecútalo (o hazlo desde terminal).
+### Datos de prueba (opcional)
 
-### 2.3. Cargar datos de prueba (opcional)
+Ejecuta `database/seeds.sql` para poblar la base con datos demo:
 
-Ejecuta `database/seeds.sql` para poblar la base con datos de demostración:
+| Rol | Email | Contraseña |
+|-----|-------|-----------|
+| Admin | admin@gymfit360.com | Admin2024! |
+| Recepcionista | recepcionista@gymfit360.com | Admin2024! |
+| Usuario | jp.ramirez@email.com | Admin2024! |
 
-- **Usuarios de acceso:**
-  - Admin: `admin@gymfit360.com` / `Admin2024!`
-  - Recepcionista: `recepcionista@gymfit360.com` / `Admin2024!`
-- **5 tipos de membresía**, **5 entrenadores**, **10 afiliados**, membresías, clases, pagos, planes.
+Incluye: 5 tipos de membresía, 5 entrenadores, 10 afiliados con membresías, pagos, clases, planes de entrenamiento.
 
-> Para entorno productivo, omite este paso o reemplázalo con datos reales.
+> Para producción omite este paso.
 
 ---
 
-## Paso 3 — Configurar el backend
+## 3. Backend
 
 ```bash
 cd backend
-
-# Instalar dependencias
 npm install
-
-# Copiar archivo de entorno
-cp .env.example .env
-# En Windows: Copy-Item .env.example .env
+copy .env.example .env
 ```
 
-Edita `.env` con tus credenciales de MySQL:
+Edita `.env` con tus credenciales:
 
-```env
-PORT=4000
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=tu_contraseña_aqui
-DB_NAME=gymfit360_db
-JWT_SECRET=genera_un_secreto_de_32_caracteres_aqui
-JWT_EXPIRES_IN=8h
-CORS_ORIGIN=http://localhost:3000
-NODE_ENV=development
+```
+# Obligatorio
+DB_PASSWORD=tu_contraseña_mysql
+JWT_SECRET=genera_un_secreto_aleatorio_de_32_caracteres
+
+# Opcional (sin SMTP los códigos se muestran en consola)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu.correo@gmail.com
+SMTP_PASS=xxxx xxxx xxxx xxxx
 ```
 
-> **Importante:** Cambia `JWT_SECRET` por una cadena aleatoria segura (mínimo 32 caracteres).
+El resto de variables (`PORT`, `CORS_ORIGIN`, `GYM_NOMBRE`, etc.) vienen con valores funcionales por defecto. La carpeta `uploads/` se crea automáticamente al iniciar.
 
 ---
 
-## Paso 4 — Configurar el frontend
+## 4. Frontend
 
 ```bash
 cd frontend
-
-# Instalar dependencias
 npm install
+```
 
-# Crear archivo de entorno
-# Crea .env.local con:
+Crea `frontend/.env.local`:
+
+```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
 
 ---
 
-## Paso 5 — Iniciar el proyecto
+## 5. Iniciar
 
-### Terminal 1 — Backend
+### Terminal 1 — Backend (puerto 4000)
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Deberías ver: `GymFit360 API corriendo en puerto 4000`
+Salida esperada: `GymFit360 API corriendo en puerto 4000`
 
-### Terminal 2 — Frontend
+### Terminal 2 — Frontend (puerto 3000)
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Abre **http://localhost:3000** en tu navegador.
+Abre **http://localhost:3000** en el navegador.
 
 ---
 
-## Comandos disponibles
+## Comandos
 
 ### Backend
 
 | Comando | Descripción |
-|---|---|
-| `npm run dev` | Inicia con recarga automática (`node --watch`) |
-| `npm start` | Inicia en producción |
-| `npm test` | Ejecuta tests |
+|---------|-------------|
+| `npm run dev` | Desarrollo con recarga automática (`node --watch`) |
+| `npm start` | Producción |
+| `npm test` | Ejecutar tests |
 
 ### Frontend
 
 | Comando | Descripción |
-|---|---|
-| `npm run dev` | Inicia servidor de desarrollo |
-| `npm run build` | Compila para producción |
-| `npm start` | Inicia servidor de producción |
-| `npm run lint` | Ejecuta ESLint |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Compilar para producción |
+| `npm start` | Servidor de producción |
+| `npm run lint` | ESLint |
 
 ---
 
-## Solución de problemas comunes
+## Solución de problemas
 
-### Error: "Access denied for user 'root'@'localhost'"
+**Error de conexión MySQL** — Verifica que `DB_PASSWORD` en `.env` coincida con la contraseña de tu MySQL.
 
-La contraseña en `.env` no coincide con la de MySQL. Verifica en MySQL Workbench → Users and Privileges.
+**Redirección al login al iniciar sesión** — Asegúrate de que el navegador acepte cookies para `localhost`. El token se guarda en localStorage y cookie automáticamente al iniciar sesión.
 
-### Error: "Unknown database 'gymfit360_db'"
-
-No ejecutaste `CREATE DATABASE` (paso 2.1).
-
-### El login redirige de vuelta al login
-
-El token JWT no se encuentra en cookies. Asegúrate de que tu navegador acepte cookies para `localhost`. Si usas un proxy como configuración de Next.js 16 (`proxy.ts`), el token debe estar disponible tanto en `localStorage` como en cookies (el login lo guarda automáticamente en ambos).
-
-### "Module not found: Can't resolve '@/components/ui/...'"
-
-Falta agregar un componente de shadcn/ui. Ejecuta:
+**Componente shadcn/ui faltante** — Si una página falla por un componente UI que no existe, instálalo:
 
 ```bash
 cd frontend
 npx shadcn@latest add button input card label sonner table dialog select badge textarea --yes
 ```
 
----
-
-## Stack técnico
-
-| Capa | Tecnología |
-|---|---|
-| **Frontend** | Next.js 16.2.6, React 19, shadcn/ui v4 (@base-ui/react), React Query, Axios, Zod, react-hook-form |
-| **Backend** | Express 5, mysql2 (promesas), JWT (jsonwebtoken), bcryptjs, helmet, cors, express-validator, express-rate-limit |
-| **Base de datos** | MySQL 8.0.13+, InnoDB, utf8mb4 |
-| **Lenguaje** | TypeScript (frontend), JavaScript CommonJS (backend) |
+**Rate limiting (429 Too Many Requests)** — El backend tiene límites: 100 peticiones cada 15 minutos (global) y 10 por 15 minutos en login. Espera o reinicia el servidor.

@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicPaths = ["/login", "/register", "/register-admin", "/verificar-cuenta"];
+const publicPaths = ["/login", "/register", "/register-admin", "/verificar-cuenta", "/olvide-password", "/restablecer-password"];
 const publicExact = ["/"];
 
-function decodeRole(token: string): string | null {
+function decodeToken(token: string): Record<string, unknown> | null {
   try {
-    const payload = token.split(".")[1];
-    const decoded = JSON.parse(atob(payload));
-    return decoded.rol || null;
+    return JSON.parse(atob(token.split(".")[1]));
   } catch {
     return null;
   }
+}
+
+function decodeRole(token: string): string | null {
+  const decoded = decodeToken(token);
+  return decoded?.rol ? String(decoded.rol) : null;
+}
+
+function isTokenExpired(token: string): boolean {
+  const decoded = decodeToken(token);
+  if (!decoded?.exp) return true;
+  return (decoded.exp as number) * 1000 < Date.now();
 }
 
 const roleRoutes: Record<string, string> = {
@@ -27,15 +36,15 @@ export function proxy(request: NextRequest) {
   const isPublic = publicPaths.some((p) => pathname.startsWith(p)) || publicExact.some((p) => pathname === p);
   const isPrivate = !isPublic && pathname !== "/favicon.ico";
 
-  if (isPublic && token) {
+  if (isPublic && token && !isTokenExpired(token)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (isPrivate && !token) {
+  if (isPrivate && (!token || isTokenExpired(token))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token) {
+  if (token && !isTokenExpired(token)) {
     const role = decodeRole(token);
 
     if (role === "usuario" && (pathname.startsWith("/dashboard") || pathname.startsWith("/afiliados") || pathname.startsWith("/entrenadores") || pathname.startsWith("/membresias") || pathname.startsWith("/clases") || pathname.startsWith("/planes") || pathname.startsWith("/reportes"))) {

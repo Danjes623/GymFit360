@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -22,13 +22,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    window.history.pushState(null, "", window.location.href);
-    const handleBack = () => { router.push("/"); };
-    window.addEventListener("popstate", handleBack);
-    return () => window.removeEventListener("popstate", handleBack);
-  }, [router]);
 
   const {
     register,
@@ -71,6 +64,10 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-md mx-4">
         <div className="glass rounded-2xl p-8 space-y-6">
+          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al inicio
+          </button>
           <div className="text-center space-y-2">
             <img alt="GymFit360" className="h-12 w-12 rounded-xl inline-flex mb-2" src="/logo.png"/>
             <h1 className="text-2xl font-bold tracking-tight">GymFit360</h1>
@@ -118,6 +115,12 @@ export default function LoginPage() {
               </div>
             )}
           </form>
+
+          <div className="text-center">
+            <Link href="/olvide-password" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             ¿No tienes cuenta?{" "}

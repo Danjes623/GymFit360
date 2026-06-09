@@ -362,6 +362,13 @@ CREATE TABLE suscripciones_admin (
 -- ============================================================
 
 -- ============================================================
+-- MIGRACIÓN: Recuperación de contraseña
+-- ============================================================
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS reset_token      VARCHAR(255) NULL COMMENT 'Token para restablecer contraseña',
+  ADD COLUMN IF NOT EXISTS reset_expiracion DATETIME     NULL COMMENT 'Expiración del token de restablecimiento';
+
+-- ============================================================
 -- ÍNDICES para mejorar rendimiento en consultas frecuentes
 -- ============================================================
 
@@ -389,3 +396,4 @@ CREATE INDEX idx_clases_horario ON clases(horario);
 CREATE INDEX idx_planes_afiliado ON planes_entrenamiento(afiliado_id);
 CREATE INDEX idx_planes_entrenador ON planes_entrenamiento(entrenador_id);
 CREATE INDEX idx_rutinas_plan ON rutinas_ejercicio(plan_id);
+

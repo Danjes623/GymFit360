@@ -8,7 +8,7 @@ const pool = require('../../config/db');
 const validate = require('../../middlewares/validate');
 const authenticateToken = require('../../middlewares/auth');
 const upload = require('../../services/upload');
-const { sendVerificationCode } = require('../../services/email');
+const { sendVerificationCode, sendPasswordResetEmail } = require('../../services/email');
 
 const router = Router();
 
@@ -575,6 +575,98 @@ router.post(
       );
 
       res.json({ success: true, data: { logo: logoUrl } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' },
+});
+
+router.post(
+  '/olvide-password',
+  resetLimiter,
+  [
+    body('email')
+      .isEmail().withMessage('Debe ser un email válido')
+      .normalizeEmail(),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const [rows] = await pool.query(
+        'SELECT id, nombre, activo FROM usuarios WHERE email = ?',
+        [email]
+      );
+
+      // Always return success to avoid revealing if email exists
+      if (!rows[0] || !rows[0].activo) {
+        return res.json({ success: true, message: 'Si el email está registrado, recibirás un enlace para restablecer tu contraseña.' });
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiracion = new Date(Date.now() + 60 * 60 * 1000);
+
+      await pool.query(
+        'UPDATE usuarios SET reset_token = ?, reset_expiracion = ? WHERE id = ?',
+        [token, expiracion, rows[0].id]
+      );
+
+      await sendPasswordResetEmail({ email, token, nombre: rows[0].nombre });
+
+      res.json({ success: true, message: 'Si el email está registrado, recibirás un enlace para restablecer tu contraseña.' });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/restablecer-password',
+  resetLimiter,
+  [
+    body('token')
+      .trim()
+      .notEmpty().withMessage('El token es requerido'),
+    body('password')
+      .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+    body('confirmarPassword')
+      .isLength({ min: 6 }).withMessage('Debe confirmar la contraseña'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { token, password, confirmarPassword } = req.body;
+
+      if (password !== confirmarPassword) {
+        return res.status(422).json({ success: false, error: 'Las contraseñas no coinciden' });
+      }
+
+      const [rows] = await pool.query(
+        'SELECT id FROM usuarios WHERE reset_token = ? AND reset_expiracion > NOW() AND activo = 1',
+        [token]
+      );
+
+      if (!rows[0]) {
+        return res.status(400).json({ success: false, error: 'Token inválido o expirado' });
+      }
+
+      const hash = await bcrypt.hash(password, 10);
+
+      await pool.query(
+        'UPDATE usuarios SET password_hash = ?, reset_token = NULL, reset_expiracion = NULL, actualizado_en = NOW() WHERE id = ?',
+        [hash, rows[0].id]
+      );
+
+      res.json({ success: true, message: 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.' });
     } catch (err) {
       next(err);
     }

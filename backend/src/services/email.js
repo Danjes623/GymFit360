@@ -54,6 +54,49 @@ async function sendAdminCode({ email, codigo, nombre }) {
   }
 }
 
+async function sendPasswordResetEmail({ email, token, nombre }) {
+  const from = process.env.SMTP_FROM || 'GymFit360 <noreply@gymfit360.com>';
+  const resetUrl = `${process.env.CORS_ORIGIN || 'http://localhost:3000'}/restablecer-password?token=${token}`;
+
+  if (!transporter) {
+    console.log(`[EMAIL MOCK] Para: ${email} | Reset token: ${token} | Nombre: ${nombre}`);
+    return { success: true, mock: true };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to: email,
+      subject: 'Restablece tu contraseña - GymFit360',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">GymFit360</h2>
+          <p>Hola <strong>${nombre}</strong>,</p>
+          <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta.</p>
+          <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${resetUrl}"
+               style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px;
+                      border-radius: 6px; text-decoration: none; font-weight: bold;">
+              Restablecer contraseña
+            </a>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">Este enlace expira en 1 hora.</p>
+          <p style="color: #6b7280; font-size: 14px;">Si no solicitaste este cambio, ignora este mensaje.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+          <p style="color: #9ca3af; font-size: 12px;">GymFit360 — Sistema de gestión de gimnasios</p>
+        </div>
+      `,
+    });
+
+    console.log(`[EMAIL OK] Para: ${email} | ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[EMAIL ERROR]', error);
+    return { success: false, error: error.message };
+  }
+}
+
 async function sendVerificationCode({ email, codigo, nombre }) {
   const from = process.env.SMTP_FROM || 'GymFit360 <noreply@gymfit360.com>';
 
@@ -90,4 +133,4 @@ async function sendVerificationCode({ email, codigo, nombre }) {
   }
 }
 
-module.exports = { sendAdminCode, sendVerificationCode };
+module.exports = { sendAdminCode, sendVerificationCode, sendPasswordResetEmail };
