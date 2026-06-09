@@ -133,4 +133,43 @@ async function sendVerificationCode({ email, codigo, nombre }) {
   }
 }
 
-module.exports = { sendAdminCode, sendVerificationCode, sendPasswordResetEmail };
+async function sendContactEmail({ nombre, email, mensaje }) {
+  const from = process.env.SMTP_FROM || 'GymFit360 <noreply@gymfit360.com>';
+  const to = process.env.CONTACT_EMAIL || process.env.SMTP_USER || 'admin@gymfit360.com';
+
+  if (!transporter) {
+    console.log(`[EMAIL MOCK] Contacto de: ${nombre} <${email}> | Mensaje: ${mensaje}`);
+    return { success: true, mock: true };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      replyTo: email,
+      subject: `Contacto desde GymFit360 - ${nombre}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Nuevo mensaje de contacto</h2>
+          <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr><td style="padding: 8px; font-weight: bold; color: #4b5563;">Nombre</td><td style="padding: 8px;">${nombre}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; color: #4b5563;">Email</td><td style="padding: 8px;">${email}</td></tr>
+          </table>
+          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin: 0; color: #1f2937;">${mensaje}</p>
+          </div>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+          <p style="color: #9ca3af; font-size: 12px;">GymFit360 — Sistema de gestión de gimnasios</p>
+        </div>
+      `,
+    });
+
+    console.log(`[EMAIL OK] Contacto de ${email} | ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[EMAIL ERROR]', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { sendAdminCode, sendVerificationCode, sendPasswordResetEmail, sendContactEmail };

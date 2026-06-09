@@ -14,6 +14,9 @@ const QUICK_LOGIN = [
 export default function LandingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ nombre: '', email: '', mensaje: '' });
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   const quickLogin = async (email: string, password: string, role: string) => {
     setLoading(email);
@@ -256,20 +259,41 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="glass-card p-10">
-              <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-8" onSubmit={async (e) => {
+                e.preventDefault();
+                if (enviando || enviado) return;
+                setEnviando(true);
+                try {
+                  const res = await api.post('/auth/contacto', formData);
+                  if (res.success) {
+                    toast.success('Mensaje enviado correctamente. Te contactaremos pronto.');
+                    setFormData({ nombre: '', email: '', mensaje: '' });
+                    setEnviado(true);
+                    setTimeout(() => setEnviado(false), 5000);
+                  }
+                } catch (err: unknown) {
+                  const msg =
+                    err && typeof err === 'object' && 'response' in err
+                      ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+                      : undefined;
+                  toast.error(msg || 'Error al enviar el mensaje. Intenta de nuevo.');
+                } finally {
+                  setEnviando(false);
+                }
+              }}>
                 <div className="relative group">
-                  <input className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="name" placeholder="Nombre" type="text"/>
+                  <input className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="name" placeholder="Nombre" type="text" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}/>
                   <label className="absolute left-0 top-0 text-[10px] font-[600] tracking-[0.1em] uppercase text-[#c4c7c7] transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-[16px] peer-focus:-translate-y-4 peer-focus:text-[#CCFF00] peer-focus:text-[10px]" htmlFor="name">Nombre completo</label>
                 </div>
                 <div className="relative group">
-                  <input className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="email" placeholder="Email" type="email"/>
+                  <input className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="email" placeholder="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}/>
                   <label className="absolute left-0 top-0 text-[10px] font-[600] tracking-[0.1em] uppercase text-[#c4c7c7] transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-[16px] peer-focus:-translate-y-4 peer-focus:text-[#CCFF00] peer-focus:text-[10px]" htmlFor="email">Correo electr&oacute;nico</label>
                 </div>
                 <div className="relative group">
-                  <textarea className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="message" placeholder="Mensaje" rows={3}></textarea>
+                  <textarea className="w-full bg-transparent border-0 border-b border-white/20 py-4 focus:ring-0 focus:border-[#CCFF00] transition-all peer placeholder-transparent outline-none text-white" id="message" placeholder="Mensaje" rows={3} value={formData.mensaje} onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}></textarea>
                   <label className="absolute left-0 top-0 text-[10px] font-[600] tracking-[0.1em] uppercase text-[#c4c7c7] transition-all -translate-y-4 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-[16px] peer-focus:-translate-y-4 peer-focus:text-[#CCFF00] peer-focus:text-[10px]" htmlFor="message">Mensaje</label>
                 </div>
-                <button className="w-full py-5 gradient-kinetic text-[#050505] text-[12px] font-[600] tracking-[0.1em] font-extrabold uppercase hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all" type="submit">Enviar mensaje</button>
+                <button className="w-full py-5 gradient-kinetic text-[#050505] text-[12px] font-[600] tracking-[0.1em] font-extrabold uppercase hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed" type="submit" disabled={enviando || enviado}>{enviando ? 'Enviando...' : enviado ? 'Enviado ✓' : 'Enviar mensaje'}</button>
               </form>
             </div>
           </div>

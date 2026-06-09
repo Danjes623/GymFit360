@@ -8,7 +8,7 @@ const pool = require('../../config/db');
 const validate = require('../../middlewares/validate');
 const authenticateToken = require('../../middlewares/auth');
 const upload = require('../../services/upload');
-const { sendVerificationCode, sendPasswordResetEmail } = require('../../services/email');
+const { sendVerificationCode, sendPasswordResetEmail, sendContactEmail } = require('../../services/email');
 
 const router = Router();
 
@@ -575,6 +575,51 @@ router.post(
       );
 
       res.json({ success: true, data: { logo: logoUrl } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+const contactLimiter = rateLimit({
+  windowMs: 8 * 60 * 60 * 1000,
+  max: 1,
+  keyGenerator: (req) => req.body?.email || req.ip,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: (req) => {
+    const resetTime = req.rateLimit?.resetTime;
+    let restante = '8 horas';
+    if (resetTime) {
+      const diff = new Date(resetTime).getTime() - Date.now();
+      const h = Math.floor(diff / 3600000);
+      const m = Math.ceil((diff % 3600000) / 60000);
+      restante = h > 0 ? `${h}h ${m}min` : `${m}min`;
+    }
+    return { success: false, error: `Ya enviaste un mensaje. Vuelve a intentarlo en ${restante}.` };
+  },
+});
+
+router.post(
+  '/contacto',
+  contactLimiter,
+  [
+    body('nombre').trim().isLength({ min: 2, max: 100 }).withMessage('El nombre debe tener entre 2 y 100 caracteres'),
+    body('email').isEmail().withMessage('Debe ser un email válido').normalizeEmail(),
+    body('mensaje').trim().isLength({ min: 10, max: 1000 }).withMessage('El mensaje debe tener entre 10 y 1000 caracteres'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { nombre, email, mensaje } = req.body;
+
+      const result = await sendContactEmail({ nombre, email, mensaje });
+
+      if (!result.success) {
+        return res.status(500).json({ success: false, error: 'Error al enviar el mensaje. Intenta de nuevo.' });
+      }
+
+      res.json({ success: true, message: 'Mensaje enviado correctamente. Te contactaremos pronto.' });
     } catch (err) {
       next(err);
     }
