@@ -584,7 +584,7 @@ router.post(
 const contactLimiter = rateLimit({
   windowMs: 8 * 60 * 60 * 1000,
   max: 1,
-  keyGenerator: (req) => req.body?.email || req.ip,
+  keyGenerator: (req) => req.body?.email || req.ipKeyGenerator(),
   standardHeaders: true,
   legacyHeaders: false,
   message: (req) => {
