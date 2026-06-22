@@ -27,6 +27,8 @@ import {
   Calendar,
   Pencil,
   Upload,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Gimnasio {
@@ -60,6 +62,10 @@ export default function MiCuentaPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const [form, setForm] = useState({ nombre: "", direccion: "", telefono: "" });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -124,6 +130,28 @@ export default function MiCuentaPage() {
       // error silently
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await api.post("/auth/eliminar-cuenta", { password: deletePassword });
+      if (res.data.success) {
+        localStorage.removeItem("token");
+        document.cookie = "token=; path=/; max-age=0";
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        "Error al eliminar la cuenta";
+      setDeleteError(msg);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -387,6 +415,83 @@ export default function MiCuentaPage() {
               <p className="font-medium">{user.gimnasio.telefono || "—"}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Eliminar Cuenta */}
+      <Card className="border-destructive/40 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Eliminar Cuenta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-2">
+            Esta acción es irreversible. Todos tus datos serán eliminados permanentemente.
+          </p>
+          {user.rol === "admin" && (
+            <p className="text-sm text-destructive/80 mb-4 font-medium">
+              Al eliminar tu cuenta de administrador, todos los afiliados, entrenadores,
+              membresías, pagos y datos del gimnasio se eliminarán en cascada.
+            </p>
+          )}
+          <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); setDeletePassword(""); setDeleteError(""); }}>
+            <DialogTrigger
+              render={
+                <Button variant="destructive" className="gap-1.5">
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar mi cuenta
+                </Button>
+              }
+            />
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Confirmar eliminación
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <p className="text-sm text-muted-foreground">
+                  Para confirmar, ingresa tu contraseña actual. Esta acción no se puede deshacer.
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="delete-password">Contraseña</Label>
+                  <Input
+                    id="delete-password"
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                    placeholder="Tu contraseña actual"
+                    disabled={deleting}
+                  />
+                  {deleteError && (
+                    <p className="text-sm text-destructive">{deleteError}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose
+                  render={<Button variant="outline">Cancelar</Button>}
+                />
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={!deletePassword || deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    "Confirmar eliminación"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>

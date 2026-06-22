@@ -168,7 +168,12 @@ router.post(
         [insertResult.insertId, email]
       );
 
-      await sendVerificationCode({ email, codigo, nombre });
+      const envio = await sendVerificationCode({ email, codigo, nombre });
+
+      if (!envio.success && !envio.mock) {
+        await pool.query('DELETE FROM usuarios WHERE id = ?', [insertResult.insertId]);
+        return res.status(500).json({ success: false, error: `No se pudo enviar el código de verificación: ${envio.error}` });
+      }
 
       res.status(201).json({
         success: true,
@@ -293,7 +298,11 @@ router.post(
         [codigo, expiracion, usuario.id]
       );
 
-      await sendVerificationCode({ email, codigo, nombre: usuario.nombre });
+      const envio = await sendVerificationCode({ email, codigo, nombre: usuario.nombre });
+
+      if (!envio.success && !envio.mock) {
+        return res.status(500).json({ success: false, error: `No se pudo enviar el nuevo código: ${envio.error}` });
+      }
 
       res.json({ success: true, message: 'Nuevo código enviado a tu email' });
     } catch (err) {
@@ -712,6 +721,43 @@ router.post(
       );
 
       res.json({ success: true, message: 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.' });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/eliminar-cuenta',
+  authenticateToken,
+  [
+    body('password')
+      .notEmpty().withMessage('La contraseña es requerida'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { password } = req.body;
+
+      const [rows] = await pool.query(
+        'SELECT id, password_hash, rol FROM usuarios WHERE id = ? AND activo = 1',
+        [req.user.id]
+      );
+
+      if (!rows[0]) {
+        return res.status(404).json({ success: false, error: 'Cuenta no encontrada' });
+      }
+
+      const match = await bcrypt.compare(password, rows[0].password_hash);
+      if (!match) {
+        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+      }
+
+      await pool.query('DELETE FROM usuarios WHERE id = ?', [req.user.id]);
+
+      res.clearCookie('token');
+
+      res.json({ success: true, message: 'Cuenta eliminada exitosamente' });
     } catch (err) {
       next(err);
     }

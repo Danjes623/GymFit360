@@ -3,13 +3,24 @@
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import api from "@/lib/api";
 import {
   Loader2, User as UserIcon, Mail, Shield, Calendar,
   Building2, MapPin, Phone, ChevronLeft, ChevronRight,
-  Dumbbell, Clock, Target,
+  Dumbbell, Clock, Target, Trash2, AlertTriangle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIAS_CORTO = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -66,6 +77,10 @@ export default function MiPerfilPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [semanaOffset, setSemanaOffset] = useState(0);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const semana = useMemo(() => {
     const ref = new Date();
@@ -119,6 +134,28 @@ export default function MiPerfilPage() {
     };
     load();
   }, []);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await api.post("/auth/eliminar-cuenta", { password: deletePassword });
+      if (res.data.success) {
+        localStorage.removeItem("token");
+        document.cookie = "token=; path=/; max-age=0";
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        "Error al eliminar la cuenta";
+      setDeleteError(msg);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -509,6 +546,77 @@ export default function MiPerfilPage() {
           </Card>
         </>
       )}
+
+      {/* Eliminar Cuenta */}
+      <Card className="border-destructive/40 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Eliminar Cuenta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Esta acción es irreversible. Todos tus datos serán eliminados permanentemente.
+          </p>
+          <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); setDeletePassword(""); setDeleteError(""); }}>
+            <DialogTrigger
+              render={
+                <Button variant="destructive" className="gap-1.5">
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar mi cuenta
+                </Button>
+              }
+            />
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Confirmar eliminación
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <p className="text-sm text-muted-foreground">
+                  Para confirmar, ingresa tu contraseña actual. Esta acción no se puede deshacer.
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="delete-password-perfil">Contraseña</Label>
+                  <Input
+                    id="delete-password-perfil"
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                    placeholder="Tu contraseña actual"
+                    disabled={deleting}
+                  />
+                  {deleteError && (
+                    <p className="text-sm text-destructive">{deleteError}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose
+                  render={<Button variant="outline">Cancelar</Button>}
+                />
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={!deletePassword || deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    "Confirmar eliminación"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 }
