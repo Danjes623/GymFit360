@@ -76,6 +76,7 @@ export default function ClasesPage() {
   const [eliminarId, setEliminarId] = useState<number | null>(null);
   const [detalleClase, setDetalleClase] = useState<Clase & { inscritos: Inscrito[] } | null>(null);
   const [dialogInscribir, setDialogInscribir] = useState(false);
+  const [horarioValue, setHorarioValue] = useState("");
   const [saving, setSaving] = useState(false);
 
   const form = useForm<ClaseForm>({ resolver: zodResolver(claseSchema) });
@@ -102,6 +103,7 @@ export default function ClasesPage() {
 
   const abrirCrear = () => {
     setEditando(null);
+    setHorarioValue("");
     form.reset({
       nombre: "", descripcion: "", entrenador_id: 0,
       horario: "", duracion_minutos: 60, cupo_maximo: 20,
@@ -111,11 +113,13 @@ export default function ClasesPage() {
 
   const abrirEditar = (c: Clase) => {
     setEditando(c);
+    const horarioLocal = c.horario.slice(0, 16);
+    setHorarioValue(horarioLocal);
     form.reset({
       nombre: c.nombre,
       descripcion: c.descripcion || "",
       entrenador_id: c.entrenador_id,
-      horario: c.horario.slice(0, 16),
+      horario: horarioLocal,
       duracion_minutos: c.duracion_minutos,
       cupo_maximo: c.cupo_maximo,
     });
@@ -125,7 +129,7 @@ export default function ClasesPage() {
   const onSubmit = async (data: ClaseForm) => {
     setSaving(true);
     try {
-      const payload = { ...data, horario: new Date(data.horario).toISOString() };
+      const payload = { ...data, horario: data.horario + ':00' };
       if (editando) {
         await api.put(`/clases/${editando.id}`, payload);
         toast.success("Clase actualizada");
@@ -276,7 +280,15 @@ export default function ClasesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="horario">Horario *</Label>
-                <Input id="horario" type="datetime-local" {...form.register("horario")} />
+                <Input
+                  id="horario"
+                  type="datetime-local"
+                  value={horarioValue}
+                  onChange={(e) => {
+                    setHorarioValue(e.target.value);
+                    form.setValue("horario", e.target.value, { shouldValidate: true });
+                  }}
+                />
                 {form.formState.errors.horario && <p className="text-sm text-destructive">{form.formState.errors.horario.message}</p>}
               </div>
               <div className="space-y-2">

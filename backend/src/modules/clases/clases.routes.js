@@ -94,10 +94,12 @@ router.post(
         return res.status(400).json({ success: false, error: 'Entrenador no encontrado o inactivo' });
       }
 
+      const horarioMySQL = horario.replace('T', ' ').replace(/\.\d{3}Z$/, '').replace(/Z$/, '');
+
       const [result] = await pool.query(
         `INSERT INTO clases (nombre, descripcion, entrenador_id, horario, duracion_minutos, cupo_maximo, admin_id)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo, req.user.admin_id]
+        [nombre, descripcion || null, entrenador_id, horarioMySQL, duracion_minutos || 60, cupo_maximo, req.user.admin_id]
       );
 
       const [rows] = await pool.query(
@@ -145,12 +147,14 @@ router.put(
     try {
       const { nombre, descripcion, entrenador_id, horario, duracion_minutos, cupo_maximo, activa } = req.body;
 
+      const horarioMySQL = horario.replace('T', ' ').replace(/\.\d{3}Z$/, '').replace(/Z$/, '');
+
       const [result] = await pool.query(
         `UPDATE clases
          SET nombre = ?, descripcion = ?, entrenador_id = ?, horario = ?,
              duracion_minutos = ?, cupo_maximo = ?, activa = ?
-          WHERE id = ? AND admin_id = ?`,
-        [nombre, descripcion || null, entrenador_id, horario, duracion_minutos || 60, cupo_maximo, activa ?? 1, req.params.id, req.user.admin_id]
+           WHERE id = ? AND admin_id = ?`,
+        [nombre, descripcion || null, entrenador_id, horarioMySQL, duracion_minutos || 60, cupo_maximo, activa ?? 1, req.params.id, req.user.admin_id]
       );
 
       if (result.affectedRows === 0) {
