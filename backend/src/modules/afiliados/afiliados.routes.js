@@ -31,11 +31,11 @@ router.get(
                  ELSE 'activa'
                END AS estado_membresia
         FROM afiliados a
-        LEFT JOIN membresias m ON m.afiliado_id = a.id AND (m.activa = 1 OR ? = 'todos')
+        LEFT JOIN membresias m ON m.afiliado_id = a.id AND m.activa = 1
         LEFT JOIN tipos_membresia tm ON tm.id = m.tipo_membresia_id
         WHERE a.admin_id = ?
       `;
-      const params = [estado === 'todos' ? 0 : 1, req.user.admin_id];
+      const params = [req.user.admin_id];
 
       if (estado && estado !== 'todos') {
         switch (estado) {

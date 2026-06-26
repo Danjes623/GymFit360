@@ -86,6 +86,17 @@ router.post(
 
       const { admin_id } = req.user;
 
+      const [entrenadores] = await pool.query(
+        'SELECT activo FROM entrenadores WHERE id = ? AND admin_id = ?',
+        [entrenador_id, admin_id]
+      );
+      if (!entrenadores[0]) {
+        return res.status(404).json({ success: false, error: 'Entrenador no encontrado' });
+      }
+      if (!entrenadores[0].activo) {
+        return res.status(400).json({ success: false, error: 'No se puede asignar un plan a un entrenador inactivo' });
+      }
+
       const [result] = await pool.query(
         `INSERT INTO planes_entrenamiento (afiliado_id, entrenador_id, nombre, descripcion, objetivo, fecha_inicio, fecha_fin, admin_id)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

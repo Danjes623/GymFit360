@@ -129,13 +129,18 @@ Abre **http://localhost:3000** en el navegador.
 
 ## Usuarios de prueba
 
-Requiere haber ejecutado `database/seeds.sql`.
+Requiere haber ejecutado `database/seeds.sql`. Las contraseñas estan
+hasheadas con bcrypt (cost 10) y los usuarios ya vienen pre-verificados
+(`verificado = 1`), listos para iniciar sesion sin paso adicional.
 
-| Rol             | Email                       | Contraseña   |
-|-----------------|-----------------------------|--------------|
-| Admin           | admin@gymfit360.com         | Admin2024!   |
-| Recepcionista   | recepcionista@gymfit360.com | Admin2024!   |
-| Usuario         | jp.ramirez@email.com        | Admin2024!   |
+| Rol             | Email                         | Contraseña   |
+|-----------------|-------------------------------|--------------|
+| Admin           | admin@gymfit360.com           | Admin2024!   |
+| Recepcionista   | recepcionista@gymfit360.com   | Admin2024!   |
+| Usuario         | jp.ramirez@email.com          | Admin2024!   |
+
+> **Codigo de registro para nuevos admins:** `GYM360-ADMIN-2026`
+> (se inserta automaticamente con `seeds.sql`).
 
 ## Comandos
 
@@ -176,7 +181,8 @@ Requiere haber ejecutado `database/seeds.sql`.
 | Pagos (registro por membresia)            | ✅       | ✅        |
 | Clases grupales (CRUD + inscripciones)    | ✅       | ✅        |
 | Planes de entrenamiento (asignacion)      | ✅       | ✅        |
-| Reportes (resumen, ingresos, distribucion)| ✅       | ✅        |
+| Reportes (resumen, ingresos, distribucion, clases + inscritas, metodos de pago) | ✅ | ✅ |
+| Validacion entrenador activo en planes (RN-04) | ✅       | —        |
 
 ## Estructura del proyecto
 
@@ -211,6 +217,9 @@ gymfit360/
 - **Rate limiting**: 100 peticiones cada 15 minutos (global), 10 peticiones cada 15 minutos en login y 1 por IP en formulario de contacto.
 - **Roles de usuario**: `admin` y `recepcionista` acceden al dashboard. El rol `usuario` solo accede a `mi-perfil`.
 - **Seguridad**: Helmet, CORS restringido, rate limiting, sin stack traces en produccion.
+- **Usuarios semilla**: los 3 usuarios de `seeds.sql` ya vienen con `verificado = 1`. Si creas un usuario desde la interfaz de registro, debera verificar su correo.
+- **Planes de entrenamiento**: el backend rechaza asignar un plan a un entrenador inactivo (`activo = 0`). Retorna HTTP 400 con mensaje descriptivo.
+- **Reportes**: el endpoint `GET /api/reportes/clases-mas-inscritos` devuelve las clases ordenadas por cantidad de inscripciones activas.
 
 ## Solucion de problemas
 
@@ -228,3 +237,30 @@ npx shadcn@latest add button input card label sonner table dialog select badge t
 **Rate limiting (429 Too Many Requests)** — El backend aplica limites de peticiones. Si los alcanzas, espera o reinicia el servidor.
 
 **Error ERR_ERL_KEY_GEN_IPV6** — Asegurate de que express-rate-limit use `req.ipKeyGenerator()` en los keyGenerators personalizados.
+
+**Credenciales de prueba no funcionan** — Si ejecutaste `database/schema.sql` y `database/seeds.sql` pero el login retorna `"Credenciales invalidas"`, vuelve a ejecutar los seeds para asegurar que tienes la version mas reciente con los hashes corregidos:
+
+```bash
+mysql -u root -p gymfit360_db < database/seeds.sql
+```
+
+**Error "Cuenta no verificada" con usuarios semilla** — Los usuarios de `seeds.sql` ya tienen `verificado = 1`. Si ves este error, es probable que tengas una version antigua del archivo. Re-ejecuta los seeds.
+
+**Error "Entrenador inactivo" al crear plan** — El sistema ahora valida que el entrenador este activo antes de asignar un plan de entrenamiento (regla RN-04). Si ves HTTP 400, verifica que el entrenador seleccionado tenga `activo = 1`.
+
+---
+
+## Correcciones recientes
+
+### v1.1.0 — Junio 2026
+
+Correcciones basadas en el informe de QA (`Docs/informe_qa_GymFit360.md`):
+
+| ID    | Descripcion                                                                 | Archivo(s) afectado(s)                    |
+|-------|-----------------------------------------------------------------------------|-------------------------------------------|
+| BUG-001 | Implementado endpoint `GET /api/reportes/clases-mas-inscritos` (RF-11)  | `backend/src/modules/reportes/reportes.routes.js` |
+| BUG-002 | Validacion de entrenador activo al crear plan (RN-04). Retorna 400 si `activo=0` | `backend/src/modules/planes/planes.routes.js` |
+| BUG-003 | Corregido filtro `?estado=todos` que generaba duplicados en listado de afiliados | `backend/src/modules/afiliados/afiliados.routes.js` |
+| BUG-004 | Corregidos hashes bcrypt, email de recepcionista y columna `verificado` en `seeds.sql` | `database/seeds.sql` |
+
+**Resultado del QA:** 30/32 casos aprobados (93.75%) → 32/32 (100%) con estas correcciones.

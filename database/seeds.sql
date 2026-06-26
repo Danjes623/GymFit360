@@ -22,8 +22,11 @@ INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
  'usuario');
 
 -- Asignar admin_id (self-reference: el admin es su propio tenant)
+-- Desactivar modo seguro para UPDATE sin KEY en WHERE
+SET SQL_SAFE_UPDATES = 0;
 UPDATE usuarios SET admin_id = id WHERE rol = 'admin';
 UPDATE usuarios SET admin_id = 1 WHERE admin_id IS NULL;
+SET SQL_SAFE_UPDATES = 1;
 
 -- ============================================================
 -- CÓDIGOS DE ADMIN (un solo uso)

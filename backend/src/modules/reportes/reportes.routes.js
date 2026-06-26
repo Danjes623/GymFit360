@@ -162,4 +162,24 @@ router.get('/ultimos-pagos', async (req, res, next) => {
   }
 });
 
+router.get('/clases-mas-inscritos', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT c.id, c.nombre, c.descripcion, c.horario, c.cupo_maximo,
+              e.nombre AS entrenador,
+              COUNT(ic.id) AS total_inscritos
+       FROM clases c
+       JOIN entrenadores e ON e.id = c.entrenador_id
+       LEFT JOIN inscripciones_clases ic ON ic.clase_id = c.id AND ic.estado = 'activa'
+       WHERE c.admin_id = ?
+       GROUP BY c.id, c.nombre, c.descripcion, c.horario, c.cupo_maximo, e.nombre
+       ORDER BY total_inscritos DESC`,
+      [req.user.admin_id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
