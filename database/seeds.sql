@@ -10,16 +10,16 @@
 -- Primero se insertan SIN admin_id para no violar la FK auto-referenciada.
 -- Luego se actualiza admin_id una vez todos los registros existen.
 -- ============================================================
-INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
+INSERT INTO usuarios (nombre, email, password_hash, rol, verificado) VALUES
 ('Administrador Principal', 'admin@gymfit360.com',
- '$2b$10$X9Qk8Wj3mN2pL5vH1cRuOeYtZdIaFgBsCxEwVqJrKlMnPoTuWyA6',
- 'admin'),
-('Recepcionista Ana García', 'recepcion@gymfit360.com',
- '$2b$10$X9Qk8Wj3mN2pL5vH1cRuOeYtZdIaFgBsCxEwVqJrKlMnPoTuWyA6',
- 'recepcionista'),
+ '$2b$10$LOXqD01TSJz.9I2y1ekEFOS9q0IczAlaUZtaL9d/mhWPKPqrvzJ4S',
+ 'admin', 1),
+('Recepcionista Ana García', 'recepcionista@gymfit360.com',
+ '$2b$10$LOXqD01TSJz.9I2y1ekEFOS9q0IczAlaUZtaL9d/mhWPKPqrvzJ4S',
+ 'recepcionista', 1),
 ('Juan Pablo Ramírez', 'jp.ramirez@email.com',
- '$2b$10$X9Qk8Wj3mN2pL5vH1cRuOeYtZdIaFgBsCxEwVqJrKlMnPoTuWyA6',
- 'usuario');
+ '$2b$10$LOXqD01TSJz.9I2y1ekEFOS9q0IczAlaUZtaL9d/mhWPKPqrvzJ4S',
+ 'usuario', 1);
 
 -- Asignar admin_id (self-reference: el admin es su propio tenant)
 -- Desactivar modo seguro para UPDATE sin KEY en WHERE
